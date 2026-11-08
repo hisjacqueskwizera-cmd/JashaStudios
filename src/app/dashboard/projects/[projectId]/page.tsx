@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Aperture, FolderOpen } from "lucide-react";
 import { ProjectAssetsManager, type ProjectAssetCard } from "@/components/projects/project-assets-manager";
+import { DevicePairing } from "@/components/projects/device-pairing";
+import { CaptureInbox } from "@/components/projects/capture-inbox";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = { params: Promise<{ projectId: string }> };
@@ -103,6 +105,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           backgrounds={backgrounds}
           presets={presets}
         />
+        <DevicePairing projectId={project.id} />
+        <CaptureInbox projectId={project.id} />
         {(referenceResult.error || backgroundResult.error || presetResult.error) && (
           <p role="status" className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">Some library records could not be loaded. Check that the Phase 4 migration was applied successfully.</p>
         )}
