@@ -37,7 +37,7 @@ Updated: 2026-11-08
 - [x] Optional API-key authentication and production fail-closed behavior
 - [x] Unit and API tests added
 - [ ] Validate with representative portrait, full-body and studio references
-- [ ] Configure and validate MediaPipe Pose Landmarker model asset
+- [ ] Configure and validate server-side MediaPipe Pose Landmarker model asset
 - [ ] Persist analysis for owned reference images and connect project workspace
 
 ## Phase 6 — Secure QR device pairing
@@ -65,8 +65,19 @@ Updated: 2026-11-08
 - [ ] Verify phone camera permissions, upload and desktop sync on a reachable HTTPS deployment
 - [ ] Add production rate limiting, abuse monitoring and device/browser QA
 
+## Phase 8 — Real-time pose coach
+- [x] Browser-side MediaPipe Pose Landmarker integration with GPU-to-CPU fallback
+- [x] Live pose skeleton overlay on the smartphone camera preview
+- [x] Authenticated retrieval of the selected project reference through the paired-device credential
+- [x] Local reference-pose inference and normalized landmark similarity score
+- [x] Live arm-height and horizontal-position coaching prompts
+- [x] On-device inference; camera frames are not streamed to the vision API for pose tracking
+- [x] No database migration required
+- [ ] Verify CDN/model loading on supported mobile browsers and networks
+- [ ] Calibrate similarity scoring and prompts against diverse body types, poses and camera orientations
+- [ ] Add reference pose analysis to the desktop reference workspace and persist reusable pose metadata
+
 ## Remaining phases
-8. Real-time pose coach
 9. Hybrid AI photo transformation
 10. Gallery and desktop synchronization
 11. Payments, credits and subscriptions
@@ -76,4 +87,4 @@ Updated: 2026-11-08
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning and deployment behavior are not considered verified until tested against the user's environment.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading and deployment behavior are not considered verified until tested against the user's environment.

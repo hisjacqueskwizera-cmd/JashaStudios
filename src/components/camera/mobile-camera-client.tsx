@@ -2,6 +2,7 @@
 import { useCallback,useEffect,useRef,useState } from "react";
 import Link from "next/link";
 import { AlertCircle,Camera,CheckCircle2,ChevronLeft,FlipHorizontal,LoaderCircle,RefreshCw,Upload,Video,VideoOff } from "lucide-react";
+import { PoseCoach } from "@/components/camera/pose-coach";
 type Facing="environment"|"user";
 type CaptureState="live"|"preview"|"uploading"|"uploaded"|"error";
 export function MobileCameraClient(){
@@ -59,6 +60,7 @@ export function MobileCameraClient(){
    <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#171715]">
     <div className="relative aspect-[3/4] max-h-[70vh] bg-black sm:aspect-video">
      {showPhoto?<img src={photoUrl||""} alt="Captured photo preview" className="h-full w-full object-contain"/>:<video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover"/>}
+     {!showPhoto&&<PoseCoach videoRef={videoRef} token={token} active={cameraReady&&state==="live"}/>}
      {!cameraReady&&state==="live"&&<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center"><VideoOff size={32} className="text-[#8e8980]"/><p className="text-sm text-[#a9a49b]">{cameraError||"Starting camera…"}</p></div>}
      {state==="uploaded"&&<div className="absolute inset-0 flex items-center justify-center bg-black/55"><div className="rounded-2xl bg-[#171715] p-6 text-center"><CheckCircle2 size={36} className="mx-auto text-emerald-300"/><p className="mt-3 text-sm font-semibold">Upload complete</p><p className="mt-1 text-xs text-[#a9a49b]">Check your desktop project.</p></div></div>}
     </div><canvas ref={canvasRef} className="hidden"/>
@@ -74,7 +76,7 @@ export function MobileCameraClient(){
      </div>
      {!token&&<p className="mt-4 text-center text-xs text-[#a9a49b]">This device is not paired. <Link href="/pair" className="text-[#e6a66c] underline">Pair it again</Link>.</p>}
     </div>
-   </div><p className="mt-4 flex items-center justify-center gap-2 text-center text-[10px] leading-5 text-[#77736c]"><Video size={13}/> Camera access works on HTTPS websites or localhost.</p>
+   </div><p className="mt-4 flex items-center justify-center gap-2 text-center text-[10px] leading-5 text-[#77736c]"><Video size={13}/> Camera access works on HTTPS websites or localhost. Pose guidance runs on this device.</p>
   </section>
  </main>;
 }
