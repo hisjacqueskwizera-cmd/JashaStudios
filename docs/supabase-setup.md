@@ -51,7 +51,14 @@ This is optional developer tooling; it is not a runtime dependency and does not 
 
 ## Database
 
-Apply the SQL migrations in `supabase/migrations/` to the Supabase project before testing sign-up or project CRUD. Configure the Supabase Auth Email provider and the allowed site/redirect URLs, including:
+Apply the SQL migrations in `supabase/migrations/` to the Supabase project before testing sign-up or project CRUD. This repository contains the migration files but not the Supabase CLI local config yet. Initialize it once, then link and push the migrations:
+
+    npx supabase init
+    npx supabase login
+    npx supabase link --project-ref mhkjpzvyomecbqoyydnw
+    npx supabase db push
+
+Alternatively, run the three SQL migration files in timestamp order in the Supabase SQL Editor. The project database password may be requested by the CLI; enter it locally and never paste it into chat or commit it. Configure the Supabase Auth Email provider and the allowed site/redirect URLs, including:
 
 - Local: `http://localhost:3000/auth/callback`
 - Production: `https://YOUR_APP_DOMAIN/auth/callback`

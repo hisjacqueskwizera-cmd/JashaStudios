@@ -35,6 +35,7 @@ This phase adds a project workspace for the visual inputs used by later referenc
 Apply migrations in timestamp order from the repository root:
 
 ```bash
+npx supabase init   # one-time: creates supabase/config.toml
 npx supabase login
 npx supabase link --project-ref mhkjpzvyomecbqoyydnw
 npx supabase db push
