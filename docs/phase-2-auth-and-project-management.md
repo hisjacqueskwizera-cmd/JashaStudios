@@ -2,25 +2,27 @@
 
 ## Implemented
 
-- Supabase SSR client using the public URL and anon/publishable key.
-- Middleware refreshes Supabase auth cookies and validates the current user.
-- Email/password sign-up and sign-in using Supabase Auth.
-- Sign-out action.
+- Supabase SSR client using the public URL and publishable key.
+- Browser, server and middleware client utilities.
+- Email/password sign-up and sign-in server actions.
+- Auth cookie refresh middleware and email confirmation callback.
+- Sign-out.
 - Dashboard server-loads the authenticated user's projects.
 - Create, rename, archive and restore project actions.
 - Zod validation for project and credential inputs.
-- Every project write is scoped to the authenticated user; database RLS enforces ownership.
-- Project-management migration adds owner-only insert, update and delete policies.
+- Owner-scoped server actions and project RLS write policies.
 
 ## Required Supabase configuration
 
-Set these values in .env.local and in the production deployment environment:
+Create a local `.env.local` file and add:
 
-    NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+    NEXT_PUBLIC_SUPABASE_URL=https://mhkjpzvyomecbqoyydnw.supabase.co
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
     NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-Never put a service-role key in a NEXT_PUBLIC_ variable. Browser and SSR clients use the anon/publishable key and rely on RLS.
+Use the publishable key (formerly anon/public key). Never put a Supabase secret/service-role key in a `NEXT_PUBLIC_` variable. The legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` variable remains supported temporarily.
+
+For production, set the same public variables in the hosting provider's environment settings and redeploy.
 
 Apply migrations in order using the Supabase CLI:
 
@@ -28,15 +30,11 @@ Apply migrations in order using the Supabase CLI:
 
 Or run both SQL migration files in timestamp order in the Supabase SQL Editor.
 
-## Auth provider settings
-
-In Supabase Authentication settings, enable the Email provider, configure the site URL to the deployed app URL, and add the local and production redirect URLs required by the email-confirmation policy.
-
-Email confirmation behavior is controlled by Supabase Auth. If confirmation is required, the app displays a confirmation notice and sends the user to sign-in.
+In Supabase Authentication settings, enable the Email provider, configure the site URL, and allow local and production callback URLs ending in `/auth/callback`.
 
 ## Security notes
 
-- Server actions call auth.getUser(); they do not trust user IDs supplied by forms.
+- Server actions call `auth.getUser()`; they do not trust user IDs supplied by forms.
 - Every project mutation scopes by both project ID and authenticated user ID.
 - RLS policies enforce ownership independently of application checks.
 - No service-role credential is used by the dashboard.
