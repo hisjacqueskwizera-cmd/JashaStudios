@@ -90,6 +90,8 @@ async def generate_transformation_request(
     """Internal synchronous provider adapter; production job workers will call this boundary."""
     _authorize(x_api_key)
     settings = get_settings()
+    if not settings.transformation_enabled:
+        raise HTTPException(status_code=503, detail="AI transformation is currently a placeholder and is disabled.")
     if safety_identifier and not SAFETY_IDENTIFIER_PATTERN.fullmatch(safety_identifier):
         raise HTTPException(status_code=422, detail="Safety identifier must be a SHA-256 hex digest.")
 

@@ -22,6 +22,9 @@ export async function enqueueTransformationJob(input: {
     return { error: "Check the selected project, images and transformation notes." as const };
   }
 
+  if (process.env.TRANSFORMATION_ENABLED !== "true") {
+    return { error: "AI transformation is currently a placeholder and has not been enabled yet." as const };
+  }
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { error: "Supabase is not configured." as const };
   const { data: { user }, error: authError } = await supabase.auth.getUser();

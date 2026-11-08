@@ -48,6 +48,8 @@ def _validate_worker_lease(lease_seconds: int, provider_timeout_seconds: float) 
 class TransformationWorker:
     def __init__(self) -> None:
         settings = get_settings()
+        if not settings.transformation_enabled:
+            raise RuntimeError("Transformation worker is disabled; set TRANSFORMATION_ENABLED=true only when Phase 9 is approved.")
         if not settings.supabase_url or not settings.supabase_secret_key or not settings.openai_api_key:
             raise RuntimeError("Worker requires SUPABASE_URL, SUPABASE_SECRET_KEY and OPENAI_API_KEY.")
         self.settings = settings

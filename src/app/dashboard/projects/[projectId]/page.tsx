@@ -113,6 +113,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         <CaptureInbox projectId={project.id} />
         <TransformationPanel
           projectId={project.id}
+          enabled={process.env.TRANSFORMATION_ENABLED === "true"}
           selectedReference={references.find((asset) => asset.selected) ?? null}
           captures={(captureResult.data ?? []).map((capture) => ({
             id: capture.id,

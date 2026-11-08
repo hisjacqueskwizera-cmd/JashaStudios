@@ -24,10 +24,12 @@ export function TransformationPanel({
   projectId,
   selectedReference,
   captures,
+  enabled,
 }: {
   projectId: string;
   selectedReference: { id: string; name: string } | null;
   captures: CaptureOption[];
+  enabled: boolean;
 }) {
   const [availableCaptures, setAvailableCaptures] = useState(captures);
   const [captureId, setCaptureId] = useState(captures[0]?.id ?? "");
@@ -126,6 +128,7 @@ export function TransformationPanel({
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d58a48]">AI transformation</p>
           <h2 className="mt-1 text-xl font-semibold">Recreate the reference style</h2>
           <p className="mt-1 text-sm leading-6 text-[#8e8980]">Your capture is the identity source. The selected reference guides the scene, pose, lighting and photographic treatment. Every result still needs human review.</p>
+          {!enabled && <p className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-200">Preview placeholder · AI generation is disabled until Phase 9 is activated.</p>}
         </div>
       </div>
 
@@ -174,11 +177,11 @@ export function TransformationPanel({
         <button
           type="button"
           onClick={() => void start()}
-          disabled={busy || running || !selectedReference || !captureId || availableCaptures.length === 0}
+          disabled={!enabled || busy || running || !selectedReference || !captureId || availableCaptures.length === 0}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#d58a48] px-5 text-sm font-semibold text-[#17130f] transition hover:bg-[#e29b5a] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {busy ? <LoaderCircle size={16} className="animate-spin" /> : <WandSparkles size={16} />}
-          Start transformation
+          {enabled ? "Start transformation" : "AI transformation coming soon"}
         </button>
         {running && (
           <button type="button" onClick={() => void cancel()} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-sm text-[#c8c1b6] hover:bg-white/5 disabled:opacity-50">
