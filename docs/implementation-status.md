@@ -53,8 +53,19 @@ Updated: 2026-11-08
 - [ ] Verify physical phone pairing and revocation using reachable HTTPS
 - [ ] Add production edge rate limiting and monitoring
 
+## Phase 7 — Smartphone camera studio
+- [x] Mobile camera route with permission handling, live preview and front/rear camera selection
+- [x] Capture, retake, approve and upload retry workflow
+- [x] Random per-device bearer credential issued only after explicit pairing confirmation; only SHA-256 hash stored in Postgres
+- [x] Same-origin capture API, device/session authorization, file signature and size validation
+- [x] Private Storage upload, captured-image metadata and rollback on metadata failure
+- [x] Desktop capture inbox with owner-checked signed previews and four-second polling
+- [x] Setup and physical-device test documentation
+- [ ] Apply Phase 7 migration and configure server-only SUPABASE_SECRET_KEY
+- [ ] Verify phone camera permissions, upload and desktop sync on a reachable HTTPS deployment
+- [ ] Add production rate limiting, abuse monitoring and device/browser QA
+
 ## Remaining phases
-7. Smartphone camera studio
 8. Real-time pose coach
 9. Hybrid AI photo transformation
 10. Gallery and desktop synchronization
