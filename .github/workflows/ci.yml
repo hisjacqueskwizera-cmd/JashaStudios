@@ -46,9 +46,28 @@ jobs:
         run: python -m pytest
 
   python-container:
-    name: Python production image build
+    name: Python production image build and smoke test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build API container
         run: docker build --pull --tag jasha-vision-api:ci ./python-service
+      - name: Run container and verify production readiness
+        shell: bash
+        run: |
+          docker run --detach --name jasha-vision-api-ci \
+            --publish 10000:10000 \
+            --env APP_ENV=production \
+            --env VISION_API_KEY=ci-smoke-test-only \
+            --env PORT=10000 \
+            jasha-vision-api:ci
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:10000/health/ready; then
+              docker stop jasha-vision-api-ci
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs jasha-vision-api-ci
+          docker stop jasha-vision-api-ci || true
+          exit 1
