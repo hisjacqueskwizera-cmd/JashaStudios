@@ -50,8 +50,8 @@ class TransformationWorker:
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(60, connect=15),
             headers={
+                # Supabase sb_secret keys are opaque API keys, not JWT bearer tokens.
                 "apikey": settings.supabase_secret_key,
-                "Authorization": f"Bearer {settings.supabase_secret_key}",
             },
         )
         self.provider = OpenAIImageGenerationProvider(
