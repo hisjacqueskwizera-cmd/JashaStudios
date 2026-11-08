@@ -16,7 +16,7 @@ function signature(bytes:Uint8Array,type:string){
 export async function POST(request:NextRequest){
  if(request.headers.get("origin")!==request.nextUrl.origin)return fail("Cross-origin request rejected.",403);
  const contentLength=request.headers.get("content-length");
- if(!contentLength||!/^\\d+$/.test(contentLength))return fail("A bounded Content-Length header is required for photo uploads.",411);
+ if(!contentLength||!/^\d+$/.test(contentLength))return fail("A bounded Content-Length header is required for photo uploads.",411);
  if(Number(contentLength)>MAX_BYTES+256000)return fail("Photo exceeds the 15 MB limit.",413);
  const match=(request.headers.get("authorization")||"").match(/^Bearer ([A-Za-z0-9_-]{40,60})$/);
  if(!match)return fail("This phone is not paired. Pair it again from your desktop.",401);
