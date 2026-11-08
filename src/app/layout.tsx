@@ -1,13 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { RegisterServiceWorker } from "@/components/pwa/register-service-worker";
+import { publicEnv } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(publicEnv.NEXT_PUBLIC_APP_URL),
   title: {
     default: "Jasha Studios",
     template: "%s | Jasha Studios",
   },
   description: "An AI-powered virtual photography studio.",
   applicationName: "Jasha Studios",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -21,7 +25,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <RegisterServiceWorker />
+      </body>
     </html>
   );
 }
