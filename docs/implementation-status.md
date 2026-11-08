@@ -77,28 +77,16 @@ Updated: 2026-11-08
 - [ ] Calibrate similarity scoring and prompts against diverse body types, poses and camera orientations
 - [ ] Add reference pose analysis to the desktop reference workspace and persist reusable pose metadata
 
-## Phase 9 — Hybrid AI photo transformation
+## Phase 9 — Hybrid AI photo transformation (placeholder/scaffold)
 - [x] Safe capture/reference preprocessing with EXIF normalization and aspect-ratio-preserving resize
 - [x] Deterministic OpenCV quality checks and retake recommendations
-- [x] Authenticated FastAPI preparation endpoint with upload and pixel limits
-- [x] Provider-independent image generation interface
-- [x] OpenAI Images API adapter using ordered customer and style-reference images
-- [x] Configurable model, timeout, service-side API key and pseudonymous safety identifier
-- [x] Internal generation endpoint with input validation and output image decoding
+- [x] Provider-independent image generation interface and OpenAI adapter scaffold
 - [x] Mocked tests for provider request, input ordering, error mapping and output validation
-- [x] Processing-job metadata migration for idempotency, worker leases, retries and cancellation requests
-- [x] Authenticated enqueue/cancel/status server actions with owner checks and signed output previews
-- [x] Queue RPCs for idempotent creation, atomic SKIP LOCKED claims, lease recovery, cancellation and completion
-- [x] Python worker runtime with private Storage downloads/uploads, owner-scoped path validation and provider calls
-- [x] Bounded retry/backoff, stale-worker protection and generated_images publication in one database transaction
-- [x] Owner-scoped private Storage read policy for generated outputs, gated by committed generated_images metadata
-- [x] Attempt-specific immutable output paths prevent stale workers from overwriting a later successful attempt
-- [x] Worker lease configuration is validated against the maximum provider request timeout
-- [x] Project capture selector refreshes automatically while the project workspace is open
-- [ ] Apply Phase 9 queue migration to staging/live Supabase and verify RPC grants
-- [x] Connect the desktop project workflow UI to enqueue and monitor generation jobs
-- [ ] Run a real provider smoke test with rotated keys and consented evaluation images
-- [ ] Benchmark model output for identity fidelity, style match, anatomy, latency and cost
+- [x] Durable job schema, queue RPCs, worker runtime and desktop workflow scaffold
+- [x] Owner-scoped generated-image storage policy and attempt-specific output paths
+- [ ] Apply Phase 9 queue migration to staging/live Supabase
+- [ ] Configure provider credentials and deploy the worker when real generation is approved
+- [ ] Run real image-generation smoke tests and evaluate identity/anatomy/style quality
 - [ ] Implement segmentation and identity-preservation evaluation
 
 ## Phase 10 — Gallery and desktop synchronization
@@ -107,19 +95,25 @@ Updated: 2026-11-08
 - [x] Filters for all photos, phone captures and AI results
 - [x] Automatic ten-second refresh while the gallery tab is visible, visibility-return refresh and manual refresh
 - [x] Project links, timestamps, dimensions and file sizes
-- [x] Empty AI-results state clearly explains the Phase 9 dependency
 - [ ] Verify gallery access and signed URL expiry against live Supabase
 - [ ] Verify newly uploaded phone captures appear without a page reload on deployed HTTPS
-- [ ] Verify generated outputs appear after Phase 9 publishes records
-- [ ] Consider Supabase Realtime after publication and production connectivity are validated
+- [ ] Verify generated outputs appear after Phase 9 is enabled
+
+## Phase 11 — Payments, credits and subscriptions
+- [x] Seeded RWF catalog for single photo, Standard and Pro pricing
+- [x] Billing page with credit balance, subscription status, activity and payment history
+- [x] Immutable credit ledger and service-role-only verified-payment settlement RPC
+- [x] Provider interface placeholder; checkout remains disabled until a provider is configured
+- [ ] Choose and integrate a Rwanda-compatible payment provider
+- [ ] Verify provider webhooks and real payment settlement in staging
+- [ ] Configure approved monthly credit allowances for Standard and Pro
+- [ ] Implement recurring subscription renewals and failed-payment handling
 
 ## Remaining phases
-9. Hybrid AI photo transformation (in progress; provider adapter, durable job lifecycle, worker runtime and desktop workflow implemented; live migration, credentials and real-world quality validation remain)
-11. Payments, credits and subscriptions
 12. Admin dashboard
 13. Security, testing and quality assurance
 14. Production deployment
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading, gallery signed URLs and deployment behavior are not considered verified until tested against the user's environment. OpenAI provider tests are mocked until a real, approved smoke test is completed.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase migrations, auth, storage, payment webhooks, physical QR scanning, MediaPipe model loading and deployed-device behavior are not considered verified until tested against the user's environment. OpenAI provider tests remain mocked until real generation is approved.

@@ -198,7 +198,8 @@ begin
   end if;
 
   if p_storage_path is null or p_storage_path !~ (
-    '^' || v_job.user_id::text || '/' || v_job.project_id::text || '/generated/' || v_job.id::text || '-attempt-[1-9][0-9]*\.webp
+    '^' || v_job.user_id::text || '/' || v_job.project_id::text || '/generated/' ||
+    v_job.id::text || '-attempt-[1-9][0-9]*[.]webp$'
   ) or p_byte_size <= 0 or p_width <= 0 or p_height <= 0 then
     raise exception 'Invalid generated output metadata' using errcode = '22023';
   end if;
@@ -279,106 +280,7 @@ comment on function public.claim_transformation_job(text,integer,integer) is
 comment on function public.complete_transformation_job(uuid,text,text,bigint,integer,integer,text,text) is
   'Publishes a validated generated image and marks its job succeeded in one transaction.';
 
--- Phase 9 generated outputs are readable only by their owning user.
--- The worker writes through the server-only secret key; customers receive signed URLs
--- only after a generated_images row has been committed for this exact object.
-drop policy if exists studio_assets_generated_owner_read on storage.objects;
-create policy studio_assets_generated_owner_read on storage.objects
-  for select to authenticated using (
-    bucket_id = 'studio-assets'
-    and (storage.foldername(name))[1] = auth.uid()::text
-    and (storage.foldername(name))[3] = 'generated'
-    and exists (
-      select 1 from public.generated_images g
-      where g.storage_path = name
-        and g.user_id = auth.uid()
-        and g.project_id::text = (storage.foldername(name))[2]
-    )
-  );
-
-  ) or p_byte_size <= 0 or p_width <= 0 or p_height <= 0 then
-    raise exception 'Invalid generated output metadata' using errcode = '22023';
-  end if;
-
-  insert into public.generated_images (
-    user_id, project_id, processing_job_id, storage_path,
-    mime_type, byte_size, width, height
-  ) values (
-    v_job.user_id, v_job.project_id, v_job.id, p_storage_path,
-    'image/webp', p_byte_size, p_width, p_height
-  );
-
-  update public.processing_jobs set status = 'succeeded', stage = 'completed',
-    provider = p_provider, model = p_model, progress = 100,
-    completed_at = now(), worker_id = null, lease_expires_at = null,
-    retry_after = null
-  where id = p_job_id;
-  return true;
-end;
-$$;
-
-create or replace function public.fail_transformation_job(
-  p_job_id uuid,
-  p_worker_id text,
-  p_error_code text,
-  p_retryable boolean default true,
-  p_retry_seconds integer default 30,
-  p_max_attempts integer default 3
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare v_job public.processing_jobs%rowtype; v_retry boolean;
-begin
-  if p_max_attempts not between 1 and 10 then
-    raise exception 'Invalid retry limit' using errcode = '22023';
-  end if;
-  select * into v_job from public.processing_jobs where id = p_job_id for update;
-  if not found or v_job.worker_id is distinct from p_worker_id
-    or v_job.status <> 'running' or v_job.lease_expires_at is null
-    or v_job.lease_expires_at <= now() then return false; end if;
-
-  v_retry := coalesce(p_retryable, false)
-    and v_job.attempt_count < p_max_attempts
-    and v_job.cancel_requested_at is null;
-
-  update public.processing_jobs set
-    status = case when v_retry then 'queued' else
-      case when cancel_requested_at is not null then 'cancelled' else 'failed' end end,
-    stage = case when v_retry then 'queued' else
-      case when cancel_requested_at is not null then 'cancelled' else 'failed' end end,
-    retry_after = case when v_retry then now() + make_interval(secs => greatest(5, least(p_retry_seconds, 900))) else null end,
-    error_code = left(coalesce(p_error_code, 'transformation_failed'), 80),
-    error_message = 'The transformation could not be completed. Try again or retake the photo.',
-    completed_at = case when v_retry then null else now() end,
-    worker_id = null, lease_expires_at = null
-  where id = p_job_id;
-  return true;
-end;
-$$;
-
-revoke all on function public.enqueue_transformation_job(uuid,uuid,uuid,text,text) from public, anon;
-revoke all on function public.cancel_transformation_job(uuid) from public, anon;
-grant execute on function public.enqueue_transformation_job(uuid,uuid,uuid,text,text) to authenticated;
-grant execute on function public.cancel_transformation_job(uuid) to authenticated;
-
-revoke all on function public.claim_transformation_job(text,integer,integer) from public, anon, authenticated;
-revoke all on function public.complete_transformation_job(uuid,text,text,bigint,integer,integer,text,text) from public, anon, authenticated;
-revoke all on function public.fail_transformation_job(uuid,text,text,boolean,integer,integer) from public, anon, authenticated;
-grant execute on function public.claim_transformation_job(text,integer,integer) to service_role;
-grant execute on function public.complete_transformation_job(uuid,text,text,bigint,integer,integer,text,text) to service_role;
-grant execute on function public.fail_transformation_job(uuid,text,text,boolean,integer,integer) to service_role;
-
-comment on function public.claim_transformation_job(text,integer,integer) is
-  'Atomically claims one queued job with SKIP LOCKED and a bounded worker lease.';
-comment on function public.complete_transformation_job(uuid,text,text,bigint,integer,integer,text,text) is
-  'Publishes a validated generated image and marks its job succeeded in one transaction.';
-
--- Phase 9 generated outputs are readable only by their owning user.
--- The worker writes through the server-only secret key; customers receive signed URLs
--- only after a generated_images row has been committed for this exact object.
+-- Generated outputs are readable only by their owner after a matching metadata row is committed.
 drop policy if exists studio_assets_generated_owner_read on storage.objects;
 create policy studio_assets_generated_owner_read on storage.objects
   for select to authenticated using (
