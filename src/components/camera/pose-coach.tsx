@@ -46,8 +46,8 @@ function getGuidance(current:Landmark[],target:Landmark[]|null,score:number|null
 function draw(canvas:HTMLCanvasElement,video:HTMLVideoElement,points:Landmark[]){
  const parent=canvas.parentElement;if(!parent||!video.videoWidth||!video.videoHeight)return;
  const width=parent.clientWidth,height=parent.clientHeight,dpr=window.devicePixelRatio||1;
- if(canvas.width!==Math.round(width*dpr)||canvas.height!==Math.round(height*dpr)){canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);}
- const ctx=canvas.getContext("2d");if(!ctx)return;
+ if(canvasElement.width!==Math.round(width*dpr)||canvasElement.height!==Math.round(height*dpr)){canvasElement.width=Math.round(width*dpr);canvasElement.height=Math.round(height*dpr);}
+ const ctx=canvasElement.getContext("2d");if(!ctx)return;
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
  const scale=Math.max(width/video.videoWidth,height/video.videoHeight);
  const ox=(width-video.videoWidth*scale)/2,oy=(height-video.videoHeight*scale)/2;
@@ -64,8 +64,12 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
  const [score,setScore]=useState<number|null>(null);
  const [hasReference,setHasReference]=useState(false);
  useEffect(()=>{
-  const video=videoRef.current,canvas=canvasRef.current;
-  if(!active||!token||!video||!canvas)return;
+  const videoCandidate=videoRef.current,canvasCandidate=canvasRef.current;
+  if(!active||!token||!videoCandidate||!canvasCandidate)return;
+  // Capture non-null DOM elements before creating async callbacks. TypeScript
+  // cannot preserve ref-derived narrowing inside the nested animation loop.
+  const videoElement:HTMLVideoElement=videoCandidate;
+  const canvasElement:HTMLCanvasElement=canvasCandidate;
   let cancelled=false,frameId=0,lastInference=0;
   let landmarker:Landmarker|null=null,target:Landmark[]|null=null,referenceUrl:string|null=null;
   async function initialize(){
@@ -89,11 +93,11 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
     setStatus(target?"Live pose matching · reference loaded":"Live pose tracking · no reference selected");
     const loop=(timestamp:number)=>{
      if(cancelled||!landmarker)return;
-     if(video.readyState>=HTMLMediaElement.HAVE_CURRENT_DATA&&timestamp-lastInference>=120){
+     if(videoElement.readyState>=HTMLMediaElement.HAVE_CURRENT_DATA&&timestamp-lastInference>=120){
       lastInference=timestamp;
-      const current=landmarker.detectForVideo(video,timestamp).landmarks?.[0];
-      if(current){draw(canvas,video,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));}
-      else{setScore(null);setInstruction("Step into the camera frame so your pose can be detected.");canvas.getContext("2d")?.clearRect(0,0,canvas.width,canvas.height);}
+      const current=landmarker.detectForVideo(videoElement,timestamp).landmarks?.[0];
+      if(current){draw(canvasElement,videoElement,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));}
+      else{setScore(null);setInstruction("Step into the camera frame so your pose can be detected.");canvasElement.getContext("2d")?.clearRect(0,0,canvasElement.width,canvasElement.height);}
      }
      frameId=requestAnimationFrame(loop);
     };
@@ -103,7 +107,7 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
    }
   }
   void initialize();
-  return ()=>{cancelled=true;cancelAnimationFrame(frameId);landmarker?.close();if(referenceUrl)URL.revokeObjectURL(referenceUrl);canvas.getContext("2d")?.clearRect(0,0,canvas.width,canvas.height);};
+  return ()=>{cancelled=true;cancelAnimationFrame(frameId);landmarker?.close();if(referenceUrl)URL.revokeObjectURL(referenceUrl);canvasElement.getContext("2d")?.clearRect(0,0,canvasElement.width,canvasElement.height);};
  },[active,token,videoRef]);
  if(!active)return null;
  return <>
