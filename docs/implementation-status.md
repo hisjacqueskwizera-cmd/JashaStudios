@@ -40,8 +40,20 @@ Updated: 2026-11-08
 - [ ] Configure and validate MediaPipe Pose Landmarker model asset
 - [ ] Persist analysis for owned reference images and connect project workspace
 
+## Phase 6 — Secure QR device pairing
+- [x] Cryptographically random five-minute QR challenge
+- [x] SHA-256 hash-only challenge storage
+- [x] Owner-checked session creation and challenge revocation functions
+- [x] Phone-side claim and explicit confirmation flow
+- [x] Atomic single-use confirmation and paired-device registration
+- [x] Desktop QR display, polling status and disconnect control
+- [x] Same-origin, payload validation and no-store API protections
+- [x] Pairing migration and setup documentation
+- [ ] Apply Phase 6 migration to live Supabase
+- [ ] Verify physical phone pairing and revocation using reachable HTTPS
+- [ ] Add production edge rate limiting and monitoring
+
 ## Remaining phases
-6. Secure QR device pairing
 7. Smartphone camera studio
 8. Real-time pose coach
 9. Hybrid AI photo transformation
@@ -53,4 +65,4 @@ Updated: 2026-11-08
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase and model integrations are not complete until tested against the user's environment.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning and deployment behavior are not considered verified until tested against the user's environment.
