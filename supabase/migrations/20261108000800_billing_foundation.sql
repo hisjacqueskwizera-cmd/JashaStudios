@@ -27,16 +27,8 @@ values
     '{"seeded":true,"monthly_credits_configured":false}'::jsonb),
   ('pro', 'Pro', 'Monthly studio subscription. Credit allowance is configurable and intentionally unset.', 'subscription', 28000, 'RWF', 'month', null, 3,
     '{"seeded":true,"monthly_credits_configured":false}'::jsonb)
-on conflict (code) do update set
-  name = excluded.name,
-  description = excluded.description,
-  product_type = excluded.product_type,
-  amount_minor = excluded.amount_minor,
-  currency = excluded.currency,
-  billing_interval = excluded.billing_interval,
-  sort_order = excluded.sort_order,
-  metadata = excluded.metadata,
-  updated_at = now();
+-- Preserve administrator-edited prices and allowances if this seed is replayed.
+on conflict (code) do nothing;
 
 alter table public.payment_transactions
   add column if not exists product_code text references public.billing_products(code),
@@ -76,6 +68,11 @@ returns trigger
 language plpgsql
 as $$
 begin
+  -- Permit privileged account-erasure cascades; normal app roles cannot mutate history.
+  if tg_op = 'DELETE'
+    and current_setting('request.jwt.claim.role', true) = 'service_role' then
+    return old;
+  end if;
   raise exception 'Credit ledger entries are immutable; create a compensating entry instead.'
     using errcode = '55000';
 end;
