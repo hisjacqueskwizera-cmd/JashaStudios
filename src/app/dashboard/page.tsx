@@ -52,7 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <p className="mb-3 mt-12 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#77736c]">Workspace</p>
           <Link href="/dashboard" className="flex items-center gap-3 rounded-xl bg-white/[0.07] px-3 py-3 text-sm text-white"><FolderPlus size={17} className="text-[#d58a48]" /> Overview</Link>
           <a href="#projects" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><Camera size={17} /> Projects</a>
-          <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#625e57]" aria-disabled="true"><ImagePlus size={17} /> Gallery <span className="ml-auto text-[9px] uppercase tracking-wider">Soon</span></div>
+          <Link href="/dashboard/gallery" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><ImagePlus size={17} /> Gallery <span className="ml-auto text-[9px] uppercase tracking-wider text-[#d58a48]">New</span></Link>
           <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#625e57]" aria-disabled="true"><Sparkles size={17} /> AI Studio <span className="ml-auto text-[9px] uppercase tracking-wider">Soon</span></div>
           <div className="mt-auto rounded-2xl border border-white/10 bg-white/[0.025] p-4"><div className="flex items-center gap-2 text-xs font-medium"><CircleHelp size={15} className="text-[#d58a48]" /> Need help?</div><p className="mt-2 text-xs leading-5 text-[#8e8980]">Your studio workflow will grow here as capture and AI tools are added.</p></div>
         </aside>

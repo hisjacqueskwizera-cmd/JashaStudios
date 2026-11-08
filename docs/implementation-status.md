@@ -88,9 +88,20 @@ Updated: 2026-11-08
 - [ ] Configure GPU worker/queue, retries, cancellation and output validation
 - [ ] Persist and publish generated images only after quality checks
 
+## Phase 10 — Gallery and desktop synchronization
+- [x] Authenticated account-wide gallery for customer captures and generated-image records
+- [x] Owner-scoped metadata queries with private ten-minute signed media previews
+- [x] Filters for all photos, phone captures and AI results
+- [x] Automatic ten-second refresh while the gallery tab is visible, visibility-return refresh and manual refresh
+- [x] Project links, timestamps, dimensions and file sizes
+- [x] Empty AI-results state clearly explains the Phase 9 dependency
+- [ ] Verify gallery access and signed URL expiry against live Supabase
+- [ ] Verify newly uploaded phone captures appear without a page reload on deployed HTTPS
+- [ ] Verify generated outputs appear after Phase 9 publishes records
+- [ ] Consider Supabase Realtime after publication and production connectivity are validated
+
 ## Remaining phases
-9. Hybrid AI photo transformation (in progress)
-10. Gallery and desktop synchronization
+9. Hybrid AI photo transformation (in progress; provider and worker not integrated)
 11. Payments, credits and subscriptions
 12. Admin dashboard
 13. Security, testing and quality assurance
@@ -98,4 +109,4 @@ Updated: 2026-11-08
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading and deployment behavior are not considered verified until tested against the user's environment.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading, gallery signed URLs and deployment behavior are not considered verified until tested against the user's environment.
