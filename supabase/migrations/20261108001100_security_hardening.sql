@@ -207,3 +207,72 @@ grant execute on function public.authorize_paired_device(text) to anon, authenti
 
 comment on function public.is_active_account() is
   'Returns true only for the authenticated user with an active profile; used by RLS to revoke existing-session access after suspension.';
+
+-- Existing direct-write policies and direct admin table policies must honor account status too.
+drop policy if exists projects_owner_insert on public.projects;
+create policy projects_owner_insert on public.projects
+  for insert to authenticated
+  with check (user_id = auth.uid() and public.is_active_account());
+
+drop policy if exists projects_owner_update on public.projects;
+create policy projects_owner_update on public.projects
+  for update to authenticated
+  using (user_id = auth.uid() and public.is_active_account())
+  with check (user_id = auth.uid() and public.is_active_account());
+
+drop policy if exists projects_owner_delete on public.projects;
+create policy projects_owner_delete on public.projects
+  for delete to authenticated
+  using (user_id = auth.uid() and public.is_active_account());
+
+drop policy if exists profiles_admin_select on public.profiles;
+create policy profiles_admin_select on public.profiles
+  for select to authenticated
+  using (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account());
+
+drop policy if exists billing_products_admin_read on public.billing_products;
+create policy billing_products_admin_read on public.billing_products
+  for select to authenticated
+  using (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account());
+
+drop policy if exists audit_admin_read on public.admin_audit_logs;
+create policy audit_admin_read on public.admin_audit_logs
+  for select to authenticated
+  using (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account());
+
+drop policy if exists backgrounds_admin_manage on public.studio_backgrounds;
+create policy backgrounds_admin_manage on public.studio_backgrounds
+  for all to authenticated
+  using (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account())
+  with check (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account());
+
+drop policy if exists studio_presets_admin_insert on storage.objects;
+create policy studio_presets_admin_insert on storage.objects
+  for insert to authenticated with check (
+    bucket_id = 'studio-presets'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account()
+  );
+
+drop policy if exists studio_presets_admin_update on storage.objects;
+create policy studio_presets_admin_update on storage.objects
+  for update to authenticated
+  using (bucket_id = 'studio-presets'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account())
+  with check (bucket_id = 'studio-presets'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account());
+
+drop policy if exists studio_presets_admin_delete on storage.objects;
+create policy studio_presets_admin_delete on storage.objects
+  for delete to authenticated using (
+    bucket_id = 'studio-presets'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+    and public.is_active_account()
+  );

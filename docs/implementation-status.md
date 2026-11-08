@@ -123,8 +123,19 @@ Updated: 2026-11-08
 - [ ] Verify admin permission boundaries and operational actions against staging
 - [ ] Add user search/pagination and richer operational filters
 
+## Phase 13 — Security, testing and quality assurance
+- [x] Active-account RLS enforcement for owner data and private customer storage
+- [x] Block suspended accounts from existing paired-device authorization and new QR challenge creation
+- [x] Apply active-account checks to project writes and direct administrator table/storage policies
+- [x] Add baseline security headers and bounded camera upload request checks
+- [x] Add Python security-contract regression tests
+- [ ] Confirm latest Phase 13 frontend CI checks pass
+- [ ] Apply migration 011 in staging and run cross-account/RLS/Storage integration tests
+- [ ] Verify suspension with already-issued browser sessions and paired phones
+- [ ] Configure shared edge rate limits and validate CSP with MediaPipe/WASM
+- [ ] Complete physical mobile QA and secret-rotation/history-cleanup verification
+
 ## Remaining phases
-13. Security, testing and quality assurance
 14. Production deployment
 15. Performance, realism and cost optimization
 

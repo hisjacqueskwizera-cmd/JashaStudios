@@ -10,6 +10,10 @@ def test_suspended_accounts_are_blocked_by_owner_rls():
     assert "user_id = auth.uid() and public.is_active_account()" in migration
     assert "profiles_owner_update" in migration
     assert "studio_assets_generated_owner_read" in migration
+    assert "projects_owner_insert" in migration
+    assert "projects_owner_update" in migration
+    assert "projects_owner_delete" in migration
+    assert "backgrounds_admin_manage" in migration
 
 
 def test_suspended_accounts_cannot_use_existing_paired_devices():
