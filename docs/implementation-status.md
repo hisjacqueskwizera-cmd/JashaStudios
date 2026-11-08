@@ -91,8 +91,12 @@ Updated: 2026-11-08
 - [x] Queue RPCs for idempotent creation, atomic SKIP LOCKED claims, lease recovery, cancellation and completion
 - [x] Python worker runtime with private Storage downloads/uploads, owner-scoped path validation and provider calls
 - [x] Bounded retry/backoff, stale-worker protection and generated_images publication in one database transaction
+- [x] Owner-scoped private Storage read policy for generated outputs, gated by committed generated_images metadata
+- [x] Attempt-specific immutable output paths prevent stale workers from overwriting a later successful attempt
+- [x] Worker lease configuration is validated against the maximum provider request timeout
+- [x] Project capture selector refreshes automatically while the project workspace is open
 - [ ] Apply Phase 9 queue migration to staging/live Supabase and verify RPC grants
-- [ ] Connect the desktop project workflow UI to enqueue and monitor generation jobs
+- [x] Connect the desktop project workflow UI to enqueue and monitor generation jobs
 - [ ] Run a real provider smoke test with rotated keys and consented evaluation images
 - [ ] Benchmark model output for identity fidelity, style match, anatomy, latency and cost
 - [ ] Implement segmentation and identity-preservation evaluation
@@ -110,7 +114,7 @@ Updated: 2026-11-08
 - [ ] Consider Supabase Realtime after publication and production connectivity are validated
 
 ## Remaining phases
-9. Hybrid AI photo transformation (in progress; provider adapter, durable job lifecycle and worker runtime implemented; migration, desktop UI and real-world quality validation remain)
+9. Hybrid AI photo transformation (in progress; provider adapter, durable job lifecycle, worker runtime and desktop workflow implemented; live migration, credentials and real-world quality validation remain)
 11. Payments, credits and subscriptions
 12. Admin dashboard
 13. Security, testing and quality assurance

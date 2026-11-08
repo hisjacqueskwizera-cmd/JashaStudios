@@ -7,6 +7,7 @@ import {
   cancelTransformationJob,
   enqueueTransformationJob,
   getTransformationJob,
+  listProjectCaptures,
 } from "@/app/actions/transformation";
 
 type CaptureOption = { id: string; createdAt: string; byteSize: number };
@@ -28,12 +29,33 @@ export function TransformationPanel({
   selectedReference: { id: string; name: string } | null;
   captures: CaptureOption[];
 }) {
+  const [availableCaptures, setAvailableCaptures] = useState(captures);
   const [captureId, setCaptureId] = useState(captures[0]?.id ?? "");
   const [styleNotes, setStyleNotes] = useState("");
   const [job, setJob] = useState<JobState | null>(null);
   const [preview, setPreview] = useState<GeneratedPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const refreshCaptures = async () => {
+      const result = await listProjectCaptures(projectId);
+      if (!active || !("success" in result) || !result.success) return;
+      setAvailableCaptures(result.captures);
+      setCaptureId((current) =>
+        current && result.captures.some((capture) => capture.id === current)
+          ? current
+          : (result.captures[0]?.id ?? "")
+      );
+    };
+    void refreshCaptures();
+    const timer = window.setInterval(() => void refreshCaptures(), 5000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [projectId]);
 
   useEffect(() => {
     if (!job?.id || ["succeeded", "failed", "cancelled"].includes(job.status)) return;
@@ -121,11 +143,11 @@ export function TransformationPanel({
           <select
             value={captureId}
             onChange={(event) => setCaptureId(event.target.value)}
-            disabled={captures.length === 0 || running || busy}
+            disabled={availableCaptures.length === 0 || running || busy}
             className="mt-2 w-full bg-transparent text-sm text-white outline-none disabled:opacity-50"
           >
-            {captures.length === 0 ? <option value="">No captures available</option> : null}
-            {captures.map((capture) => (
+            {availableCaptures.length === 0 ? <option value="">Waiting for a phone capture…</option> : null}
+            {availableCaptures.map((capture) => (
               <option key={capture.id} value={capture.id} className="bg-[#171715]">
                 {new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(capture.createdAt))}
                 {" · "}{(capture.byteSize / 1024 / 1024).toFixed(1)} MB
@@ -152,7 +174,7 @@ export function TransformationPanel({
         <button
           type="button"
           onClick={() => void start()}
-          disabled={busy || running || !selectedReference || !captureId}
+          disabled={busy || running || !selectedReference || !captureId || availableCaptures.length === 0}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#d58a48] px-5 text-sm font-semibold text-[#17130f] transition hover:bg-[#e29b5a] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {busy ? <LoaderCircle size={16} className="animate-spin" /> : <WandSparkles size={16} />}

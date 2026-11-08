@@ -5,6 +5,9 @@
 - An idempotency key prevents accidental duplicate jobs on retry.
 - A Postgres RPC claims jobs atomically with `FOR UPDATE SKIP LOCKED` and a bounded lease.
 - The worker downloads only owner/project-scoped private assets, validates/prepares them, calls the configured image provider, validates the returned image, and uploads WebP output to the private `studio-assets` bucket.
+- Every worker attempt writes to a distinct immutable output path, so an expired worker cannot overwrite a later attempt's successful result.
+- The queue migration adds a customer read policy for generated objects, scoped to an existing `generated_images` row owned by that customer and project.
+- The desktop project workspace can enqueue, cancel and poll a transformation; the capture selector refreshes automatically every five seconds.
 - A single database transaction inserts `generated_images` and marks the job succeeded.
 - Failed jobs retry with a bounded attempt count; expired leases are recovered. Users can request cancellation; a result is not published after cancellation is observed.
 - Worker-only RPCs are granted to `service_role`; browser users cannot write job or generated-image rows directly.
@@ -41,8 +44,8 @@ python -m app.modules.transformation.worker
 Run one or more worker processes; Postgres leases prevent two workers from claiming the same job. Monitor logs and process health. Do not expose the worker as a public HTTP endpoint.
 
 ## Current limitations
-- The desktop enqueue/status UI is a separate integration step; this commit provides the database lifecycle and worker runtime.
+- The project workspace is connected to the enqueue/status actions. It still requires the queue migration and worker runtime to be deployed before the UI can process a real job.
 - A real paid provider smoke test and consented identity/style benchmark have not been run.
-- Lease recovery handles crashed workers, but a provider call may finish after a lease expires; the worker ID/lease checks prevent stale output from being published.
+- Lease recovery handles crashed workers. Provider timeout must be at least 30 seconds shorter than the configured lease; each attempt has a unique output object path and only the current unexpired lease can publish its database record.
 - Cancellation is cooperative: an in-flight provider request may finish, but its result is discarded if cancellation is recorded before publication.
 - GPU-specific segmentation and identity evaluation remain future work. The current pipeline is CPU preprocessing plus managed provider generation.

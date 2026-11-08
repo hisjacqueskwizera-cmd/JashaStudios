@@ -40,12 +40,26 @@ def _safe_job_path(path: Any, user_id: str, project_id: str) -> str:
     return path
 
 
+def _validate_worker_lease(lease_seconds: int, provider_timeout_seconds: float) -> None:
+    if lease_seconds <= provider_timeout_seconds + 30:
+        raise ValueError("Worker lease must exceed provider timeout by at least 30 seconds.")
+
+
 class TransformationWorker:
     def __init__(self) -> None:
         settings = get_settings()
         if not settings.supabase_url or not settings.supabase_secret_key or not settings.openai_api_key:
             raise RuntimeError("Worker requires SUPABASE_URL, SUPABASE_SECRET_KEY and OPENAI_API_KEY.")
         self.settings = settings
+        try:
+            _validate_worker_lease(
+                settings.transformation_job_lease_seconds,
+                settings.openai_image_timeout_seconds,
+            )
+        except ValueError as exc:
+            raise RuntimeError(
+                "TRANSFORMATION_JOB_LEASE_SECONDS must exceed OPENAI_IMAGE_TIMEOUT_SECONDS by at least 30 seconds."
+            ) from exc
         self.worker_id = settings.transformation_worker_id or f"{socket.gethostname()}-{uuid4().hex[:12]}"
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(60, connect=15),
@@ -176,7 +190,9 @@ class TransformationWorker:
             with Image.open(BytesIO(output_bytes)) as output_image:
                 width, height = output_image.size
 
-            output_path = f"{user_id}/{project_id}/generated/{job_id}.webp"
+            # Each attempt gets its own immutable path so an expired worker cannot
+            # overwrite a later attempt's successfully published image.
+            output_path = f"{user_id}/{project_id}/generated/{job_id}-attempt-{attempt_count}.webp"
             await self._upload(output_path, output_bytes)
             completed = await self._rpc("complete_transformation_job", {
                 "p_job_id": job_id, "p_worker_id": self.worker_id,

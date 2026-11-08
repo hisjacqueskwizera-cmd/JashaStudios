@@ -91,3 +91,27 @@ export async function getTransformationJob(jobId: string) {
     } : null,
   };
 }
+
+export async function listProjectCaptures(projectId: string) {
+  if (!UUID.test(projectId)) return { error: "Invalid project." as const };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "Supabase is not configured." as const };
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { error: "Please sign in again." as const };
+
+  const { data, error } = await supabase.from("captured_images")
+    .select("id,created_at,byte_size")
+    .eq("project_id", projectId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) return { error: "Could not refresh project captures." as const };
+  return {
+    success: true as const,
+    captures: (data ?? []).map((capture) => ({
+      id: capture.id,
+      createdAt: capture.created_at,
+      byteSize: Number(capture.byte_size),
+    })),
+  };
+}
