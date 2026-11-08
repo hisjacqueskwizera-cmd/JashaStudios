@@ -109,8 +109,21 @@ Updated: 2026-11-08
 - [ ] Configure approved monthly credit allowances for Standard and Pro
 - [ ] Implement recurring subscription renewals and failed-payment handling
 
+## Phase 12 — Admin dashboard
+- [x] Admin-only route guarded by Supabase app_metadata.role
+- [x] Platform metrics for users, projects, captures, generated images, jobs and recorded revenue
+- [x] Customer directory with account status, project counts and credit balances
+- [x] Suspend/reactivate accounts through Supabase Auth ban state and profile status
+- [x] Edit billing product prices, monthly credit allowances and availability
+- [x] Audited manual credit adjustments using the immutable credit ledger
+- [x] Recent payment and transformation-job monitoring
+- [x] Administrator audit trail for sensitive account, product and credit changes
+- [x] Admin role is never assignable from the customer-facing UI
+- [ ] Apply Phase 12 migrations and assign the first administrator in Supabase
+- [ ] Verify admin permission boundaries and operational actions against staging
+- [ ] Add user search/pagination and richer operational filters
+
 ## Remaining phases
-12. Admin dashboard
 13. Security, testing and quality assurance
 14. Production deployment
 15. Performance, realism and cost optimization

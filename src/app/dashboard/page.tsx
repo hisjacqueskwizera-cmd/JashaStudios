@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Aperture, ArrowUpRight, Camera, CheckCircle2, CircleHelp, Clock3, CreditCard, FolderPlus, ImagePlus, LogOut, Plus, Settings2, Sparkles } from "lucide-react";
+import { Aperture, ArrowUpRight, Camera, CheckCircle2, CircleHelp, Clock3, CreditCard, FolderPlus, ImagePlus, LogOut, Plus, Settings2, ShieldCheck, Sparkles } from "lucide-react";
 import { createProject } from "@/app/actions/projects";
 import { logout } from "@/app/actions/auth";
 import { ProjectList, type DashboardProject } from "@/components/dashboard/project-list";
@@ -54,11 +54,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <a href="#projects" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><Camera size={17} /> Projects</a>
           <Link href="/dashboard/gallery" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><ImagePlus size={17} /> Gallery <span className="ml-auto text-[9px] uppercase tracking-wider text-[#d58a48]">New</span></Link>
           <Link href="/dashboard/billing" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><CreditCard size={17} /> Billing & credits</Link>
+          {user.app_metadata?.role === "admin" && <Link href="/dashboard/admin" className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#a9a49b] transition hover:bg-white/5 hover:text-white"><ShieldCheck size={17} /> Admin console</Link>}
           <div className="mt-auto rounded-2xl border border-white/10 bg-white/[0.025] p-4"><div className="flex items-center gap-2 text-xs font-medium"><CircleHelp size={15} className="text-[#d58a48]" /> Need help?</div><p className="mt-2 text-xs leading-5 text-[#8e8980]">Your studio workflow will grow here as capture and AI tools are added.</p></div>
         </aside>
         <div className="min-w-0 flex-1">
           <header className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-8 lg:px-10">
-            <div className="flex items-center gap-3 lg:hidden"><Aperture size={20} className="text-[#d58a48]" /><span className="text-xs font-semibold tracking-[0.14em]">JASHA STUDIOS</span><Link href="/dashboard/billing" aria-label="Billing and credits" title="Billing and credits" className="ml-2 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-[#a9a49b]"><CreditCard size={16} /></Link></div>
+            <div className="flex items-center gap-3 lg:hidden"><Aperture size={20} className="text-[#d58a48]" /><span className="text-xs font-semibold tracking-[0.14em]">JASHA STUDIOS</span><Link href="/dashboard/billing" aria-label="Billing and credits" title="Billing and credits" className="ml-2 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-[#a9a49b]"><CreditCard size={16} /></Link>{user.app_metadata?.role === "admin" && <Link href="/dashboard/admin" aria-label="Admin console" title="Admin console" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-[#a9a49b]"><ShieldCheck size={16}/></Link>}</div>
             <div className="hidden text-sm text-[#8e8980] lg:block">Workspace <span className="px-2 text-[#55514b]">/</span> Overview</div>
             <div className="flex items-center gap-3"><span className="hidden text-right sm:block"><span className="block text-sm font-medium">{firstName}</span><span className="block text-xs text-[#8e8980]">{user.email}</span></span><form action={logout}><button aria-label="Sign out" title="Sign out" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-[#a9a49b] hover:bg-white/5 hover:text-white"><LogOut size={16} /></button></form></div>
           </header>

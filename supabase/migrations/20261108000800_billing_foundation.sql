@@ -62,11 +62,11 @@ language sql
 stable
 security invoker
 set search_path = public
-as $
+as $$
   select coalesce(sum(amount), 0)::bigint
   from public.credit_ledger
   where user_id = auth.uid();
-$;
+$$;
 
 revoke all on function public.get_credit_balance() from public, anon;
 grant execute on function public.get_credit_balance() to authenticated;
