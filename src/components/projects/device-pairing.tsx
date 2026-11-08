@@ -8,7 +8,7 @@ export function DevicePairing({projectId}:{projectId:string}){
   const [error,setError]=useState<string|null>(null);
   const [pending,startTransition]=useTransition();
   const [secondsLeft,setSecondsLeft]=useState(0);
-  const connected=pairing?.sessionStatus==="connected"&&pairing.challengeStatus==="connected";
+  const connected=pairing?.challengeStatus==="connected"&&["connected","camera_ready","captured","uploaded"].includes(pairing.sessionStatus);
   const expired=pairing?.challengeStatus==="expired"||pairing?.challengeStatus==="revoked"||pairing?.sessionStatus==="ended";
 
   useEffect(()=>{

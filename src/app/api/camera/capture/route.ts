@@ -21,7 +21,7 @@ export async function POST(request:NextRequest){
  const rpc=createPublicRpcClient();if(!rpc)return fail("Pairing service is not configured.",503);
  const hash=createHash("sha256").update(match[1],"utf8").digest("hex");
  const {data,error}=await rpc.rpc("authorize_paired_device",{p_device_token_hash:hash});
- const device=Array.isArray(data)?data[0]:data;
+ const device=(Array.isArray(data)?data[0]:data) as {device_id?:string;user_id?:string;project_id?:string;session_id?:string}|null;
  if(error||!device?.device_id||!device?.user_id||!device?.project_id||!device?.session_id)return fail("This device session has expired or was disconnected.",401);
  let form:FormData;try{form=await request.formData();}catch{return fail("Could not read the photo upload.",400);}
  const file=form.get("photo");

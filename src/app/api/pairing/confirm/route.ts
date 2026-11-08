@@ -12,7 +12,7 @@ export async function POST(request:NextRequest){
  const hash=createHash("sha256").update(parsed.data.challenge,"utf8").digest("hex");
  const deviceTokenHash=createHash("sha256").update(parsed.data.deviceToken,"utf8").digest("hex");
  const {data,error}=await supabase.rpc("confirm_pairing_challenge",{p_secret_hash:hash,p_device_label:parsed.data.deviceLabel||"Mobile camera",p_device_token_hash:deviceTokenHash});
- const result=Array.isArray(data)?data[0]:data;
+ const result=(Array.isArray(data)?data[0]:data) as {connected_session_id?:string}|null;
  if(error||!result?.connected_session_id)return NextResponse.json({error:"This pairing request has expired or has already been completed."},{status:410});
  return NextResponse.json({connected:true},{headers:{"Cache-Control":"no-store, private","Referrer-Policy":"no-referrer"}});
 }
