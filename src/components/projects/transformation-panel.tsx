@@ -70,7 +70,7 @@ export function TransformationPanel({
     });
     setBusy(false);
     if (!("success" in result) || !result.success) {
-      setMessage("error" in result ? result.error : "Could not start the transformation.");
+      setMessage("error" in result && result.error ? result.error : "Could not start the transformation.");
       return;
     }
     setJob({
