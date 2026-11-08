@@ -22,9 +22,6 @@ type Props = {
   references: ProjectAssetCard[];
   backgrounds: ProjectAssetCard[];
   presets: ProjectAssetCard[];
-  selectedReferenceId: string | null;
-  selectedUserBackgroundId: string | null;
-  selectedPresetId: string | null;
 };
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
@@ -36,6 +33,7 @@ const tabs = [
 type Tab = (typeof tabs)[number]["id"];
 
 function readableSize(bytes: number) {
+  if (bytes === 0) return "Studio preset";
   return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -44,9 +42,6 @@ export function ProjectAssetsManager({
   references,
   backgrounds,
   presets,
-  selectedReferenceId,
-  selectedUserBackgroundId,
-  selectedPresetId,
 }: Props) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +98,7 @@ export function ProjectAssetsManager({
       assetType: asset.type,
     });
     setBusy(false);
-    if (result.error) setError(result.error);
+    if ("error" in result) setError(result.error);
     else {
       setMessage(asset.type === "reference" ? "Reference selected for this project." : "Studio background selected.");
       router.refresh();

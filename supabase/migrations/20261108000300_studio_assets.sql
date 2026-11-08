@@ -171,3 +171,53 @@ comment on column public.projects.selected_user_background_id is
   'Customer-uploaded background selected for this project.';
 comment on column public.projects.selected_studio_background_id is
   'Admin-published catalog background selected for this project.';
+
+
+-- Enforce project/owner matching even for direct authenticated table updates.
+create or replace function public.validate_project_asset_selection()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.selected_reference_image_id is not null and not exists (
+    select 1 from public.reference_images r
+    where r.id = new.selected_reference_image_id
+      and r.project_id = new.id
+      and r.user_id = new.user_id
+  ) then
+    raise exception 'Selected reference image must belong to this project and user';
+  end if;
+
+  if new.selected_user_background_id is not null and not exists (
+    select 1 from public.user_studio_backgrounds b
+    where b.id = new.selected_user_background_id
+      and b.project_id = new.id
+      and b.user_id = new.user_id
+  ) then
+    raise exception 'Selected background must belong to this project and user';
+  end if;
+
+  if new.selected_studio_background_id is not null and not exists (
+    select 1 from public.studio_backgrounds b
+    where b.id = new.selected_studio_background_id
+      and b.is_active = true
+  ) then
+    raise exception 'Selected studio preset must be active';
+  end if;
+
+  if new.selected_user_background_id is not null
+     and new.selected_studio_background_id is not null then
+    raise exception 'Select either a custom background or a studio preset, not both';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists projects_validate_asset_selection on public.projects;
+create trigger projects_validate_asset_selection
+  before insert or update of selected_reference_image_id,
+    selected_user_background_id, selected_studio_background_id, user_id
+  on public.projects
+  for each row execute function public.validate_project_asset_selection();
