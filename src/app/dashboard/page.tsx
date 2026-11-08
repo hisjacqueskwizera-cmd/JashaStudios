@@ -58,7 +58,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </aside>
         <div className="min-w-0 flex-1">
           <header className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-8 lg:px-10">
-            <div className="flex items-center gap-3 lg:hidden"><Aperture size={20} className="text-[#d58a48]" /><span className="text-xs font-semibold tracking-[0.14em]">JASHA STUDIOS</span></div>
+            <div className="flex items-center gap-3 lg:hidden"><Aperture size={20} className="text-[#d58a48]" /><span className="text-xs font-semibold tracking-[0.14em]">JASHA STUDIOS</span><Link href="/dashboard/billing" aria-label="Billing and credits" title="Billing and credits" className="ml-2 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-[#a9a49b]"><CreditCard size={16} /></Link></div>
             <div className="hidden text-sm text-[#8e8980] lg:block">Workspace <span className="px-2 text-[#55514b]">/</span> Overview</div>
             <div className="flex items-center gap-3"><span className="hidden text-right sm:block"><span className="block text-sm font-medium">{firstName}</span><span className="block text-xs text-[#8e8980]">{user.email}</span></span><form action={logout}><button aria-label="Sign out" title="Sign out" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-[#a9a49b] hover:bg-white/5 hover:text-white"><LogOut size={16} /></button></form></div>
           </header>

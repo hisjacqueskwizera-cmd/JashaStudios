@@ -9,7 +9,7 @@ export async function getBillingOverview() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return { error: "Please sign in again." as const };
 
-  const [productsResult, creditsResult, subscriptionsResult, paymentsResult] = await Promise.all([
+  const [productsResult, creditsResult, balanceResult, subscriptionsResult, paymentsResult] = await Promise.all([
     supabase.from("billing_products")
       .select("code,name,description,product_type,amount_minor,currency,billing_interval,credits_per_purchase,sort_order")
       .eq("is_active", true)
@@ -19,6 +19,7 @@ export async function getBillingOverview() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(25),
+    supabase.rpc("get_credit_balance"),
     supabase.from("subscriptions")
       .select("id,plan_code,status,current_period_start,current_period_end,cancel_at_period_end,created_at")
       .eq("user_id", user.id)
@@ -31,7 +32,7 @@ export async function getBillingOverview() {
       .limit(10),
   ]);
 
-  if (productsResult.error || creditsResult.error || subscriptionsResult.error || paymentsResult.error) {
+  if (productsResult.error || creditsResult.error || balanceResult.error || subscriptionsResult.error || paymentsResult.error) {
     return { error: "Billing data is not ready. Apply the Phase 11 billing migration and try again." as const };
   }
 
@@ -43,7 +44,7 @@ export async function getBillingOverview() {
       amountRwf: Number(product.amount_minor),
       creditsPerPurchase: product.credits_per_purchase,
     })),
-    creditsBalance: ledger.reduce((balance, entry) => balance + Number(entry.amount), 0),
+    creditsBalance: Number(balanceResult.data ?? 0),
     ledger: ledger.map((entry) => ({
       id: entry.id,
       type: entry.transaction_type,

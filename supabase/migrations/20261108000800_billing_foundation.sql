@@ -55,6 +55,22 @@ create index if not exists billing_products_active_sort_idx
 create index if not exists subscriptions_user_period_idx
   on public.subscriptions(user_id, current_period_end desc);
 
+-- Balance is calculated over the complete immutable ledger, not just the recent activity page.
+create or replace function public.get_credit_balance()
+returns bigint
+language sql
+stable
+security invoker
+set search_path = public
+as $
+  select coalesce(sum(amount), 0)::bigint
+  from public.credit_ledger
+  where user_id = auth.uid();
+$;
+
+revoke all on function public.get_credit_balance() from public, anon;
+grant execute on function public.get_credit_balance() to authenticated;
+
 alter table public.billing_products enable row level security;
 drop policy if exists billing_products_active_read on public.billing_products;
 create policy billing_products_active_read on public.billing_products
