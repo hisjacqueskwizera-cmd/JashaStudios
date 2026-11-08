@@ -16,7 +16,7 @@ export function DevicePairing({projectId}:{projectId:string}){
     let active=true;
     const refresh=async()=>{
       const result=await getDevicePairingStatus({projectId,challengeId:pairing.challengeId,sessionId:pairing.sessionId});
-      if(active&&result.success) setPairing(current=>current?{...current,challengeStatus:result.challengeStatus,sessionStatus:result.sessionStatus,expiresAt:result.expiresAt,deviceLabel:result.deviceLabel}:current);
+      if(active&&"success" in result) setPairing(current=>current?{...current,challengeStatus:result.challengeStatus,sessionStatus:result.sessionStatus,expiresAt:result.expiresAt,deviceLabel:result.deviceLabel}:current);
     };
     void refresh();
     const timer=window.setInterval(()=>void refresh(),2500);
@@ -35,7 +35,7 @@ export function DevicePairing({projectId}:{projectId:string}){
     setError(null);
     startTransition(async()=>{
       const result=await createDevicePairing(projectId);
-      if(!result.success){setError(result.error||"Could not create a pairing QR code.");return;}
+      if(!("success" in result)){setError(result.error||"Could not create a pairing QR code.");return;}
       setPairing({challengeId:result.challengeId,sessionId:result.sessionId,expiresAt:result.expiresAt,qrDataUrl:result.qrDataUrl,challengeStatus:"created",sessionStatus:"waiting_for_phone",deviceLabel:null});
     });
   }
@@ -44,7 +44,7 @@ export function DevicePairing({projectId}:{projectId:string}){
     setError(null);
     startTransition(async()=>{
       const result=await revokeDevicePairing({projectId,challengeId:pairing.challengeId});
-      if(!result.success){setError(result.error||"Could not disconnect this device.");return;}
+      if(!("success" in result)){setError(result.error||"Could not disconnect this device.");return;}
       setPairing(current=>current?{...current,challengeStatus:"revoked",sessionStatus:"ended"}:null);
     });
   }
