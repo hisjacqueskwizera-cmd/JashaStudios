@@ -87,12 +87,15 @@ Updated: 2026-11-08
 - [x] Internal generation endpoint with input validation and output image decoding
 - [x] Mocked tests for provider request, input ordering, error mapping and output validation
 - [x] Processing-job metadata migration for idempotency, worker leases, retries and cancellation requests
-- [ ] Run a real provider smoke test with a rotated key and consented evaluation images
+- [x] Authenticated enqueue/cancel/status server actions with owner checks and signed output previews
+- [x] Queue RPCs for idempotent creation, atomic SKIP LOCKED claims, lease recovery, cancellation and completion
+- [x] Python worker runtime with private Storage downloads/uploads, owner-scoped path validation and provider calls
+- [x] Bounded retry/backoff, stale-worker protection and generated_images publication in one database transaction
+- [ ] Apply Phase 9 queue migration to staging/live Supabase and verify RPC grants
+- [ ] Connect the desktop project workflow UI to enqueue and monitor generation jobs
+- [ ] Run a real provider smoke test with rotated keys and consented evaluation images
 - [ ] Benchmark model output for identity fidelity, style match, anatomy, latency and cost
 - [ ] Implement segmentation and identity-preservation evaluation
-- [ ] Configure GPU/background worker queue, retries, cancellation and output validation
-- [ ] Persist generated outputs to private Storage and insert generated_images rows
-- [ ] Connect the desktop project workflow to create and monitor generation jobs
 
 ## Phase 10 — Gallery and desktop synchronization
 - [x] Authenticated account-wide gallery for customer captures and generated-image records
@@ -107,7 +110,7 @@ Updated: 2026-11-08
 - [ ] Consider Supabase Realtime after publication and production connectivity are validated
 
 ## Remaining phases
-9. Hybrid AI photo transformation (in progress; provider adapter exists, but worker/storage/quality workflow is incomplete)
+9. Hybrid AI photo transformation (in progress; provider adapter, durable job lifecycle and worker runtime implemented; migration, desktop UI and real-world quality validation remain)
 11. Payments, credits and subscriptions
 12. Admin dashboard
 13. Security, testing and quality assurance

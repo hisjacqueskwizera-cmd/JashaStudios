@@ -12,6 +12,12 @@ class Settings(BaseModel):
     openai_image_timeout_seconds: float = Field(default=240, ge=30, le=600, alias="OPENAI_IMAGE_TIMEOUT_SECONDS")
     max_reference_upload_bytes: int = Field(default=15 * 1024 * 1024, alias="MAX_REFERENCE_UPLOAD_BYTES")
     max_reference_pixels: int = Field(default=40_000_000, alias="MAX_REFERENCE_PIXELS")
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_secret_key: str = Field(default="", alias="SUPABASE_SECRET_KEY")
+    transformation_worker_id: str = Field(default="", alias="TRANSFORMATION_WORKER_ID")
+    transformation_poll_interval_seconds: float = Field(default=3, ge=1, le=60, alias="TRANSFORMATION_POLL_INTERVAL_SECONDS")
+    transformation_job_lease_seconds: int = Field(default=300, ge=60, le=900, alias="TRANSFORMATION_JOB_LEASE_SECONDS")
+    transformation_max_attempts: int = Field(default=3, ge=1, le=10, alias="TRANSFORMATION_MAX_ATTEMPTS")
 
     @property
     def cors_origins(self) -> list[str]:
@@ -29,4 +35,10 @@ def get_settings() -> Settings:
         "OPENAI_IMAGE_TIMEOUT_SECONDS": os.getenv("OPENAI_IMAGE_TIMEOUT_SECONDS", "240"),
         "MAX_REFERENCE_UPLOAD_BYTES": os.getenv("MAX_REFERENCE_UPLOAD_BYTES", str(15 * 1024 * 1024)),
         "MAX_REFERENCE_PIXELS": os.getenv("MAX_REFERENCE_PIXELS", "40000000"),
+        "SUPABASE_URL": os.getenv("SUPABASE_URL", ""),
+        "SUPABASE_SECRET_KEY": os.getenv("SUPABASE_SECRET_KEY", ""),
+        "TRANSFORMATION_WORKER_ID": os.getenv("TRANSFORMATION_WORKER_ID", ""),
+        "TRANSFORMATION_POLL_INTERVAL_SECONDS": os.getenv("TRANSFORMATION_POLL_INTERVAL_SECONDS", "3"),
+        "TRANSFORMATION_JOB_LEASE_SECONDS": os.getenv("TRANSFORMATION_JOB_LEASE_SECONDS", "300"),
+        "TRANSFORMATION_MAX_ATTEMPTS": os.getenv("TRANSFORMATION_MAX_ATTEMPTS", "3"),
     })
