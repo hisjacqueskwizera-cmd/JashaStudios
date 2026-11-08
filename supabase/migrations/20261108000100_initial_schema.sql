@@ -20,6 +20,25 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+  insert into public.profiles (id, full_name)
+  values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', ''))
+  on conflict (id) do nothing;
+  return new;
+end;
+$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
 create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -266,10 +285,14 @@ end $$;
 alter table public.profiles enable row level security;
 create policy profiles_owner_select on public.profiles
   for select to authenticated using (id = auth.uid());
-create policy profiles_owner_insert on public.profiles
-  for insert to authenticated with check (id = auth.uid());
 create policy profiles_owner_update on public.profiles
   for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+
+-- Users may edit only their display name and avatar, never account status.
+revoke all on public.profiles from anon;
+revoke insert, update on public.profiles from authenticated;
+grant select on public.profiles to authenticated;
+grant update (full_name, avatar_path) on public.profiles to authenticated;
 
 alter table public.studio_backgrounds enable row level security;
 create policy backgrounds_active_read on public.studio_backgrounds
