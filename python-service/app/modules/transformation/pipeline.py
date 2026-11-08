@@ -79,16 +79,24 @@ def prepare_image(data: bytes, max_pixels: int) -> PreparedImage:
     )
 
 
+def prepare_generated_image(data: bytes, max_pixels: int) -> tuple[bytes, ImageQualityReport]:
+    """Validate provider output and normalize it to WebP before any storage step."""
+    image, image_format = decode_reference_image(data, max_pixels)
+    image.thumbnail((MAX_OUTPUT_DIMENSION, MAX_OUTPUT_DIMENSION), Image.Resampling.LANCZOS)
+    output = BytesIO()
+    image.save(output, format="WEBP", quality=92, method=5)
+    return output.getvalue(), _quality_report(image, image_format)
+
+
 def prepare_transformation(
     captured_image: bytes,
     reference_image: bytes,
     max_pixels: int,
+    *,
+    generation_provider: str = "not_configured",
+    generation_available: bool = False,
 ) -> tuple[PreparedImage, PreparedImage, TransformationPreparationResponse]:
-    """Prepare both inputs and return honest quality/readiness diagnostics.
-
-    This stage does not generate or alter a customer photograph. A real
-    generation provider must be configured before generation can be enabled.
-    """
+    """Prepare a capture/reference pair and return honest readiness diagnostics."""
     captured = prepare_image(captured_image, max_pixels)
     reference = prepare_image(reference_image, max_pixels)
 
@@ -103,15 +111,15 @@ def prepare_transformation(
     )
     response = TransformationPreparationResponse(
         status="retake_recommended" if retake_recommended else "ready_for_generation",
-        generation_provider="not_configured",
-        generation_available=False,
+        generation_provider=generation_provider,
+        generation_available=generation_available,
         captured_image=captured.report,
         reference_image=reference.report,
         notes=[
             "Input images were decoded, EXIF-normalized and resized without cropping.",
             "Original uploads are not modified by this preparation step.",
             "Quality metrics are heuristic checks, not face recognition or identity verification.",
-            "Generative transformation is disabled until a real provider adapter and credentials are configured.",
+            "A configured provider does not guarantee identity preservation; review every generated result.",
         ],
     )
     return captured, reference, response

@@ -1,4 +1,5 @@
 from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -15,7 +16,7 @@ class ImageQualityReport(BaseModel):
 
 class TransformationPreparationResponse(BaseModel):
     status: Literal["ready_for_generation", "retake_recommended"]
-    generation_provider: Literal["not_configured"]
+    generation_provider: str
     generation_available: bool
     captured_image: ImageQualityReport
     reference_image: ImageQualityReport

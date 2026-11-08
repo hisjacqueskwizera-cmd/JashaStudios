@@ -81,12 +81,18 @@ Updated: 2026-11-08
 - [x] Safe capture/reference preprocessing with EXIF normalization and aspect-ratio-preserving resize
 - [x] Deterministic OpenCV quality checks and retake recommendations
 - [x] Authenticated FastAPI preparation endpoint with upload and pixel limits
-- [x] Provider interface contract without a fake production implementation
+- [x] Provider-independent image generation interface
+- [x] OpenAI Images API adapter using ordered customer and style-reference images
+- [x] Configurable model, timeout, service-side API key and pseudonymous safety identifier
+- [x] Internal generation endpoint with input validation and output image decoding
+- [x] Mocked tests for provider request, input ordering, error mapping and output validation
 - [x] Processing-job metadata migration for idempotency, worker leases, retries and cancellation requests
-- [ ] Select and benchmark a real image-generation provider on consented evaluation images
-- [ ] Implement provider adapter, segmentation and identity-preserving generation
-- [ ] Configure GPU worker/queue, retries, cancellation and output validation
-- [ ] Persist and publish generated images only after quality checks
+- [ ] Run a real provider smoke test with a rotated key and consented evaluation images
+- [ ] Benchmark model output for identity fidelity, style match, anatomy, latency and cost
+- [ ] Implement segmentation and identity-preservation evaluation
+- [ ] Configure GPU/background worker queue, retries, cancellation and output validation
+- [ ] Persist generated outputs to private Storage and insert generated_images rows
+- [ ] Connect the desktop project workflow to create and monitor generation jobs
 
 ## Phase 10 — Gallery and desktop synchronization
 - [x] Authenticated account-wide gallery for customer captures and generated-image records
@@ -101,7 +107,7 @@ Updated: 2026-11-08
 - [ ] Consider Supabase Realtime after publication and production connectivity are validated
 
 ## Remaining phases
-9. Hybrid AI photo transformation (in progress; provider and worker not integrated)
+9. Hybrid AI photo transformation (in progress; provider adapter exists, but worker/storage/quality workflow is incomplete)
 11. Payments, credits and subscriptions
 12. Admin dashboard
 13. Security, testing and quality assurance
@@ -109,4 +115,4 @@ Updated: 2026-11-08
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading, gallery signed URLs and deployment behavior are not considered verified until tested against the user's environment.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase database functions, physical QR scanning, MediaPipe CDN/model loading, gallery signed URLs and deployment behavior are not considered verified until tested against the user's environment. OpenAI provider tests are mocked until a real, approved smoke test is completed.
