@@ -46,8 +46,8 @@ function getGuidance(current:Landmark[],target:Landmark[]|null,score:number|null
 function draw(canvas:HTMLCanvasElement,video:HTMLVideoElement,points:Landmark[]){
  const parent=canvas.parentElement;if(!parent||!video.videoWidth||!video.videoHeight)return;
  const width=parent.clientWidth,height=parent.clientHeight,dpr=window.devicePixelRatio||1;
- if(canvasElement.width!==Math.round(width*dpr)||canvasElement.height!==Math.round(height*dpr)){canvasElement.width=Math.round(width*dpr);canvasElement.height=Math.round(height*dpr);}
- const ctx=canvasElement.getContext("2d");if(!ctx)return;
+ if(canvas.width!==Math.round(width*dpr)||canvas.height!==Math.round(height*dpr)){canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);}
+ const ctx=canvas.getContext("2d");if(!ctx)return;
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
  const scale=Math.max(width/video.videoWidth,height/video.videoHeight);
  const ox=(width-video.videoWidth*scale)/2,oy=(height-video.videoHeight*scale)/2;
