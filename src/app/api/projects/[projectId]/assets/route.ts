@@ -78,7 +78,7 @@ export async function POST(
   });
   if (uploadError) return jsonError("Image upload failed. Check the storage migration and try again.", 500);
 
-  const rawName = file.name.replace(/\\.[^.]+$/, "").replace(/[\\u0000-\\u001f]/g, "").trim();
+  const rawName = file.name.replace(/\.[^.]+$/, "").replace(/[\u0000-\u001f]/g, "").trim();
   const name = (rawName || (assetType === "reference" ? "Reference image" : "Studio background")).slice(0, 120);
   const metadata = {
     user_id: user.id,
