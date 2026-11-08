@@ -98,7 +98,7 @@ export function ProjectAssetsManager({
       assetType: asset.type,
     });
     setBusy(false);
-    if ("error" in result) setError(result.error);
+    if (result.error) setError(result.error);
     else {
       setMessage(asset.type === "reference" ? "Reference selected for this project." : "Studio background selected.");
       router.refresh();

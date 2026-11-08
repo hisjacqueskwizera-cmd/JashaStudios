@@ -102,9 +102,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           references={references}
           backgrounds={backgrounds}
           presets={presets}
-          selectedReferenceId={project.selected_reference_image_id}
-          selectedUserBackgroundId={project.selected_user_background_id}
-          selectedPresetId={project.selected_studio_background_id}
         />
         {(referenceResult.error || backgroundResult.error || presetResult.error) && (
           <p role="status" className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">Some library records could not be loaded. Check that the Phase 4 migration was applied successfully.</p>
