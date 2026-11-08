@@ -130,18 +130,24 @@ begin
   end if;
 
   update public.processing_jobs
-  set status = case when attempt_count >= p_max_attempts then 'failed' else 'queued' end,
-      stage = case when attempt_count >= p_max_attempts then 'failed' else 'queued' end,
+  set status = case
+        when cancel_requested_at is not null then 'cancelled'
+        when attempt_count >= p_max_attempts then 'failed'
+        else 'queued' end,
+      stage = case
+        when cancel_requested_at is not null then 'cancelled'
+        when attempt_count >= p_max_attempts then 'failed'
+        else 'queued' end,
       worker_id = null, lease_expires_at = null,
-      retry_after = case when attempt_count >= p_max_attempts then null else now() end,
+      retry_after = case when cancel_requested_at is not null or attempt_count >= p_max_attempts then null else now() end,
       error_code = 'worker_lease_expired',
       error_message = 'A worker lease expired before the job completed.',
-      completed_at = case when attempt_count >= p_max_attempts then now() else null end
+      completed_at = case when cancel_requested_at is not null or attempt_count >= p_max_attempts then now() else null end
   where status in ('reserved', 'running') and lease_expires_at < now();
 
   select j.id into v_job_id
   from public.processing_jobs j
-  where j.status = 'queued'
+  where j.status = 'queued' and j.cancel_requested_at is null
     and (j.retry_after is null or j.retry_after <= now())
   order by j.created_at asc
   for update skip locked

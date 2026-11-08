@@ -4,6 +4,7 @@ import { ArrowLeft, Aperture, FolderOpen } from "lucide-react";
 import { ProjectAssetsManager, type ProjectAssetCard } from "@/components/projects/project-assets-manager";
 import { DevicePairing } from "@/components/projects/device-pairing";
 import { CaptureInbox } from "@/components/projects/capture-inbox";
+import { TransformationPanel } from "@/components/projects/transformation-panel";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = { params: Promise<{ projectId: string }> };
@@ -32,13 +33,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   }
   if (!project) notFound();
 
-  const [referenceResult, backgroundResult, presetResult] = await Promise.all([
+  const [referenceResult, backgroundResult, presetResult, captureResult] = await Promise.all([
     supabase.from("reference_images").select("id,storage_path,mime_type,byte_size,created_at")
       .eq("project_id", projectId).eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("user_studio_backgrounds").select("id,name,storage_path,mime_type,byte_size,created_at")
       .eq("project_id", projectId).eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("studio_backgrounds").select("id,name,description,category,preview_path,original_path,created_at")
       .eq("is_active", true).order("category", { ascending: true }).order("name", { ascending: true }),
+    supabase.from("captured_images").select("id,created_at,byte_size")
+      .eq("project_id", projectId).eq("user_id", user.id)
+      .order("created_at", { ascending: false }).limit(20),
   ]);
 
   const privateBucket = supabase.storage.from("studio-assets");
@@ -107,7 +111,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         />
         <DevicePairing projectId={project.id} />
         <CaptureInbox projectId={project.id} />
-        {(referenceResult.error || backgroundResult.error || presetResult.error) && (
+        <TransformationPanel
+          projectId={project.id}
+          selectedReference={references.find((asset) => asset.selected) ?? null}
+          captures={(captureResult.data ?? []).map((capture) => ({
+            id: capture.id,
+            createdAt: capture.created_at,
+            byteSize: Number(capture.byte_size),
+          }))}
+        />
+        {(referenceResult.error || backgroundResult.error || presetResult.error || captureResult.error) && (
           <p role="status" className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">Some library records could not be loaded. Check that the Phase 4 migration was applied successfully.</p>
         )}
       </div>

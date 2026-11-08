@@ -168,6 +168,11 @@ class TransformationWorker:
                 safety_identifier=hashlib.sha256(user_id.encode("utf-8")).hexdigest(),
             )
             output_bytes, _ = prepare_generated_image(generated.data, self.settings.max_reference_pixels)
+            if len(output_bytes) > self.settings.max_reference_upload_bytes:
+                raise WorkerServiceError(
+                    "Generated output exceeds the configured storage limit.",
+                    retryable=False, code="generated_output_too_large",
+                )
             with Image.open(BytesIO(output_bytes)) as output_image:
                 width, height = output_image.size
 
