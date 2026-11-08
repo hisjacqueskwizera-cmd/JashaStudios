@@ -15,9 +15,7 @@ Updated: 2026-11-08
 - [x] Python module boundaries and pytest health test
 - [x] Initial Supabase schema, relationships, indexes and baseline RLS
 - [x] Architecture, development documentation and GitHub Actions CI
-- [x] Python tests and TypeScript type-check passed in GitHub Actions
-- [ ] ESLint and production build verification after flat-config import correction
-- [ ] Supabase migrations applied and live database verified
+- [x] Latest baseline GitHub Actions run passed on main (commit 65b5ec4)
 
 ## Phase 2 — Authentication and user accounts
 
@@ -36,12 +34,28 @@ Updated: 2026-11-08
 - [x] Archive and restore projects
 - [x] Project search and active/archive filters
 - [x] Owner-scoped server actions and project RLS write policies
+- [x] Project detail workspace entry point
 - [ ] Live project CRUD verified against the user's Supabase project
-- [ ] Project detail workspace and reference-image workflow
+
+## Phase 4 — Studio backgrounds and reference library
+
+- [x] Project-specific reference image library
+- [x] Customer-uploaded private studio backgrounds
+- [x] Admin-published studio preset catalog integration
+- [x] Reference/background selection stored on the project
+- [x] Private Supabase Storage bucket with owner/project-scoped policies
+- [x] Public-read, admin-write preset bucket
+- [x] JPEG/PNG/WebP allowlist, 15 MB limit and server-side file-signature validation
+- [x] Upload rollback when metadata persistence fails
+- [x] Short-lived signed preview URLs
+- [x] Owner-scoped asset deletion and project selection actions
+- [x] Project asset management UI and migration/setup documentation
+- [ ] Apply Phase 4 migration to the live Supabase project
+- [ ] Verify uploads, signed previews, selection and deletion against live Supabase Storage
+- [ ] Publish initial studio preset images through the admin catalog
 
 ## Remaining phases
 
-4. Studio background and reference library
 5. Python reference-image analysis
 6. Secure QR device pairing
 7. Smartphone camera studio
@@ -56,10 +70,11 @@ Updated: 2026-11-08
 
 ## External setup required
 
-- Supabase project URL and anon/publishable key for authentication and database integration.
-- Supabase CLI/project access to apply migrations.
+- Supabase project URL and publishable key for authentication and database integration.
+- Apply all SQL migrations in order with Supabase CLI or SQL Editor.
+- Studio preset images must be uploaded to the `studio-presets` bucket and corresponding active rows created in `studio_backgrounds`.
 - AI provider, vision API and GPU infrastructure when those phases begin.
 
 ## Validation discipline
 
-GitHub Actions Python tests and TypeScript type-check passed on the foundation branch. ESLint failed because the Next.js flat-config import omitted its .js extension; the import has been corrected and must be confirmed by CI. The production build and live Supabase integration are not yet verified for this implementation.
+GitHub Actions checks are the source of truth for frontend type-check, lint, production build and Python tests. Live Supabase authentication, database and storage operations are not considered verified until tested against the user's project. Do not mark external setup as complete based only on code being committed.

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Archive, FolderOpen, RotateCcw } from "lucide-react";
 import { archiveProject, renameProject, restoreProject } from "@/app/actions/projects";
@@ -33,8 +34,8 @@ export function ProjectList({ projects }: ProjectListProps) {
         <div className="flex flex-col gap-3 sm:flex-row">
           <input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search projects" placeholder="Search projects..." className="h-10 rounded-xl border border-white/10 bg-[#171715] px-3 text-sm outline-none focus:border-[#d58a48]" />
           <div className="flex rounded-xl border border-white/10 bg-[#171715] p-1">
-            <button onClick={() => setFilter("active")} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filter === "active" ? "bg-white/10 text-white" : "text-[#a9a49b]"}`}>Active</button>
-            <button onClick={() => setFilter("archived")} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filter === "archived" ? "bg-white/10 text-white" : "text-[#a9a49b]"}`}>Archived</button>
+            <button type="button" onClick={() => setFilter("active")} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filter === "active" ? "bg-white/10 text-white" : "text-[#a9a49b]"}`}>Active</button>
+            <button type="button" onClick={() => setFilter("archived")} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filter === "archived" ? "bg-white/10 text-white" : "text-[#a9a49b]"}`}>Archived</button>
           </div>
         </div>
       </div>
@@ -54,17 +55,18 @@ export function ProjectList({ projects }: ProjectListProps) {
               </div>
               <h3 className="mt-5 truncate text-lg font-semibold">{project.name}</h3>
               <p className="mt-1 text-xs text-[#8e8980]">{project.category || "General photography"} · Created {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(project.created_at))}</p>
+              <Link href={`/dashboard/projects/${project.id}`} className="mt-4 inline-flex h-9 items-center rounded-lg bg-[#d58a48]/10 px-3 text-xs font-semibold text-[#e6a66c] transition hover:bg-[#d58a48]/20">Open project workspace <span className="ml-2" aria-hidden="true">→</span></Link>
               <div className="mt-5 border-t border-white/10 pt-4">
                 {project.archived_at ? (
-                  <form action={restoreProject}><input type="hidden" name="id" value={project.id} /><button className="inline-flex items-center gap-2 text-xs font-medium text-[#e6a66c] hover:text-white"><RotateCcw size={14} /> Restore project</button></form>
+                  <form action={restoreProject}><input type="hidden" name="id" value={project.id} /><button type="submit" className="inline-flex items-center gap-2 text-xs font-medium text-[#e6a66c] hover:text-white"><RotateCcw size={14} /> Restore project</button></form>
                 ) : (
                   <div className="flex flex-col gap-3">
                     <form action={renameProject} className="flex gap-2">
                       <input type="hidden" name="id" value={project.id} />
                       <input name="name" defaultValue={project.name} aria-label={`Rename ${project.name}`} maxLength={120} required className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#10100f] px-3 py-2 text-xs outline-none focus:border-[#d58a48]" />
-                      <button className="rounded-lg border border-white/10 px-3 text-xs text-[#c8c1b6] hover:bg-white/5">Save</button>
+                      <button type="submit" className="rounded-lg border border-white/10 px-3 text-xs text-[#c8c1b6] hover:bg-white/5">Save</button>
                     </form>
-                    <form action={archiveProject}><input type="hidden" name="id" value={project.id} /><button className="inline-flex items-center gap-2 text-xs text-[#8e8980] hover:text-white"><Archive size={13} /> Archive</button></form>
+                    <form action={archiveProject}><input type="hidden" name="id" value={project.id} /><button type="submit" className="inline-flex items-center gap-2 text-xs text-[#8e8980] hover:text-white"><Archive size={13} /> Archive</button></form>
                   </div>
                 )}
               </div>
