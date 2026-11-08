@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.modules.analysis.routes import router as reference_analysis_router
+from app.modules.transformation.routes import router as transformation_router
 from app.settings import get_settings
 
 settings = get_settings()
-app = FastAPI(title="Jasha Studios Vision API", version="0.2.0", description="Computer vision service for Jasha Studios.")
+app = FastAPI(
+    title="Jasha Studios Vision API",
+    version="0.3.0",
+    description="Computer vision and image-transformation preparation service for Jasha Studios.",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -13,6 +19,8 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-API-Key"],
 )
 app.include_router(reference_analysis_router)
+app.include_router(transformation_router)
+
 
 @app.get("/health", tags=["health"])
 async def health() -> dict[str, str]:

@@ -77,8 +77,19 @@ Updated: 2026-11-08
 - [ ] Calibrate similarity scoring and prompts against diverse body types, poses and camera orientations
 - [ ] Add reference pose analysis to the desktop reference workspace and persist reusable pose metadata
 
+## Phase 9 — Hybrid AI photo transformation
+- [x] Safe capture/reference preprocessing with EXIF normalization and aspect-ratio-preserving resize
+- [x] Deterministic OpenCV quality checks and retake recommendations
+- [x] Authenticated FastAPI preparation endpoint with upload and pixel limits
+- [x] Provider interface contract without a fake production implementation
+- [x] Processing-job metadata migration for idempotency, worker leases, retries and cancellation requests
+- [ ] Select and benchmark a real image-generation provider on consented evaluation images
+- [ ] Implement provider adapter, segmentation and identity-preserving generation
+- [ ] Configure GPU worker/queue, retries, cancellation and output validation
+- [ ] Persist and publish generated images only after quality checks
+
 ## Remaining phases
-9. Hybrid AI photo transformation
+9. Hybrid AI photo transformation (in progress)
 10. Gallery and desktop synchronization
 11. Payments, credits and subscriptions
 12. Admin dashboard
