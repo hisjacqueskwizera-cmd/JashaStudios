@@ -187,7 +187,8 @@ declare v_job public.processing_jobs%rowtype;
 begin
   select * into v_job from public.processing_jobs where id = p_job_id for update;
   if not found or v_job.worker_id is distinct from p_worker_id
-    or v_job.status <> 'running' then return false; end if;
+    or v_job.status <> 'running' or v_job.lease_expires_at is null
+    or v_job.lease_expires_at <= now() then return false; end if;
 
   if v_job.cancel_requested_at is not null then
     update public.processing_jobs set status = 'cancelled', stage = 'cancelled',
@@ -234,9 +235,13 @@ set search_path = public
 as $$
 declare v_job public.processing_jobs%rowtype; v_retry boolean;
 begin
+  if p_max_attempts not between 1 and 10 then
+    raise exception 'Invalid retry limit' using errcode = '22023';
+  end if;
   select * into v_job from public.processing_jobs where id = p_job_id for update;
   if not found or v_job.worker_id is distinct from p_worker_id
-    or v_job.status <> 'running' then return false; end if;
+    or v_job.status <> 'running' or v_job.lease_expires_at is null
+    or v_job.lease_expires_at <= now() then return false; end if;
 
   v_retry := coalesce(p_retryable, false)
     and v_job.attempt_count < p_max_attempts
