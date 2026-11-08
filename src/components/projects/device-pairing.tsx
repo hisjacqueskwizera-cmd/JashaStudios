@@ -10,26 +10,29 @@ export function DevicePairing({projectId}:{projectId:string}){
   const [secondsLeft,setSecondsLeft]=useState(0);
   const connected=pairing?.challengeStatus==="connected"&&["connected","camera_ready","captured","uploaded"].includes(pairing.sessionStatus);
   const expired=pairing?.challengeStatus==="expired"||pairing?.challengeStatus==="revoked"||pairing?.sessionStatus==="ended";
+  const challengeId=pairing?.challengeId;
+  const sessionId=pairing?.sessionId;
+  const expiresAt=pairing?.expiresAt;
 
   useEffect(()=>{
-    if(!pairing||connected||expired) return;
+    if(!challengeId||!sessionId||connected||expired) return;
     let active=true;
     const refresh=async()=>{
-      const result=await getDevicePairingStatus({projectId,challengeId:pairing.challengeId,sessionId:pairing.sessionId});
+      const result=await getDevicePairingStatus({projectId,challengeId,sessionId});
       if(active&&"success" in result&&result.success&&typeof result.challengeStatus==="string"&&typeof result.sessionStatus==="string"&&typeof result.expiresAt==="string") setPairing(current=>current?{...current,challengeStatus:result.challengeStatus,sessionStatus:result.sessionStatus,expiresAt:result.expiresAt,deviceLabel:result.deviceLabel??null}:current);
     };
     void refresh();
     const timer=window.setInterval(()=>void refresh(),2500);
     return ()=>{active=false;window.clearInterval(timer);};
-  },[projectId,pairing?.challengeId,pairing?.sessionId,pairing?.challengeStatus,pairing?.sessionStatus,connected,expired]);
+  },[projectId,challengeId,sessionId,connected,expired]);
 
   useEffect(()=>{
-    if(!pairing||connected||expired) return;
-    const tick=()=>setSecondsLeft(Math.max(0,Math.ceil((Date.parse(pairing.expiresAt)-Date.now())/1000)));
+    if(!expiresAt||connected||expired) return;
+    const tick=()=>setSecondsLeft(Math.max(0,Math.ceil((Date.parse(expiresAt)-Date.now())/1000)));
     tick();
     const timer=window.setInterval(tick,1000);
     return ()=>window.clearInterval(timer);
-  },[pairing?.expiresAt,connected,expired]);
+  },[expiresAt,connected,expired]);
 
   function begin(){
     setError(null);
