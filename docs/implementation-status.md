@@ -9,36 +9,57 @@ Updated: 2026-11-08
 - [x] Tailwind CSS v4 setup
 - [x] shadcn/ui-compatible configuration, utility and Button primitive
 - [x] Lucide React icons
-- [x] Responsive foundation landing page
 - [x] PWA manifest, app icon and minimal offline shell service worker
-- [x] Zod public/server environment validation module
-- [x] Environment example and secret ignore rules
+- [x] Zod environment validation module
 - [x] FastAPI service shell and /health endpoint
-- [x] Python package boundaries for analysis, pose, segmentation, processing, generation, quality and storage
-- [x] Pytest health endpoint test
-- [x] Initial Supabase migration for required product tables, relationships, indexes and baseline RLS
-- [x] Profile creation trigger and restricted profile self-service columns
-- [x] Architecture and local development documentation
-- [x] GitHub Actions CI for frontend and Python checks
-- [ ] Frontend CI verification (initial run failed during Node setup because npm cache was configured without a lockfile; workflow corrected and rerun pending)
-- [x] Python tests passed in initial GitHub Actions run
-- [ ] Supabase migration applied and validated against a real project
-- [ ] Live database connection verified
-- [ ] Production deployments
+- [x] Python module boundaries and pytest health test
+- [x] Initial Supabase schema, relationships, indexes and baseline RLS
+- [x] Architecture, development documentation and GitHub Actions CI
+- [x] Python tests and TypeScript type-check passed in GitHub Actions
+- [ ] ESLint and production build verification after flat-config import correction
+- [ ] Supabase migrations applied and live database verified
 
-## Validation notes
+## Phase 2 — Authentication and user accounts
 
-The initial CI run's Python test job passed. The frontend job failed at actions/setup-node before dependency installation because npm caching expected a lockfile that the repository did not yet contain. The workflow was updated to remove that cache setting. A new run must complete before frontend checks can be marked passed.
+- [x] Supabase SSR integration foundation
+- [x] Email/password sign-up and sign-in server actions
+- [x] Auth cookie refresh middleware
+- [x] Sign-out
+- [ ] Live authentication tested against the user's Supabase project
+- [ ] Password reset and account settings
 
-The current execution environment can write to GitHub but has not cloned the repository into a local build runtime. Do not claim a local Next.js build or a live Supabase migration test.
+## Phase 3 — Desktop dashboard and project management
 
-## External setup still required
+- [x] Responsive desktop dashboard
+- [x] Authenticated project list and workspace summary
+- [x] Create and rename projects
+- [x] Archive and restore projects
+- [x] Project search and active/archive filters
+- [x] Owner-scoped server actions and project RLS write policies
+- [ ] Live project CRUD verified against the user's Supabase project
+- [ ] Project detail workspace and reference-image workflow
 
-- Supabase project URL and anon key for client integration.
-- Supabase project ref/CLI access to apply and validate migrations.
-- Server-only Supabase service-role key when trusted server operations are implemented.
-- Production vision API, AI provider and GPU infrastructure when those phases begin.
+## Remaining phases
 
-## Not implemented in Phase 1
+4. Studio background and reference library
+5. Python reference-image analysis
+6. Secure QR device pairing
+7. Smartphone camera studio
+8. Real-time pose coach
+9. Hybrid AI photo transformation
+10. Gallery and desktop synchronization
+11. Payments, credits and subscriptions
+12. Admin dashboard
+13. Security, testing and quality assurance
+14. Production deployment
+15. Performance, realism and cost optimization
 
-Authentication screens/session handling, project CRUD, background administration, image uploads and analysis, QR pairing, phone camera, pose coach, AI transformation, gallery, payments, subscriptions and admin workflows remain later phases.
+## External setup required
+
+- Supabase project URL and anon/publishable key for authentication and database integration.
+- Supabase CLI/project access to apply migrations.
+- AI provider, vision API and GPU infrastructure when those phases begin.
+
+## Validation discipline
+
+GitHub Actions Python tests and TypeScript type-check passed on the foundation branch. ESLint failed because the Next.js flat-config import omitted its .js extension; the import has been corrected and must be confirmed by CI. The production build and live Supabase integration are not yet verified for this implementation.
