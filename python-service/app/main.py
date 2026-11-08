@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.modules.analysis.routes import router as reference_analysis_router
@@ -26,3 +26,11 @@ app.include_router(transformation_router)
 async def health() -> dict[str, str]:
     """Liveness endpoint. Does not imply database or model readiness."""
     return {"status": "ok", "service": "jasha-vision-api", "environment": settings.app_env}
+
+
+@app.get("/health/ready", tags=["health"])
+async def readiness() -> dict[str, str]:
+    """Readiness check; production traffic requires the internal API key to be configured."""
+    if settings.app_env.lower() in {"production", "prod"} and not settings.vision_api_key:
+        raise HTTPException(status_code=503, detail="Service configuration incomplete.")
+    return {"status": "ready", "service": "jasha-vision-api"}

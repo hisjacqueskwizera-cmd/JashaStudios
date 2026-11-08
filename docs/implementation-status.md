@@ -129,14 +129,22 @@ Updated: 2026-11-08
 - [x] Apply active-account checks to project writes and direct administrator table/storage policies
 - [x] Add baseline security headers and bounded camera upload request checks
 - [x] Add Python security-contract regression tests
-- [ ] Confirm latest Phase 13 frontend CI checks pass
+- [x] Confirm latest Phase 13 frontend CI checks pass (GitHub Actions run 42517406671)
 - [ ] Apply migration 011 in staging and run cross-account/RLS/Storage integration tests
 - [ ] Verify suspension with already-issued browser sessions and paired phones
 - [ ] Configure shared edge rate limits and validate CSP with MediaPipe/WASM
 - [ ] Complete physical mobile QA and secret-rotation/history-cleanup verification
 
+## Phase 14 — Production deployment
+- [x] Add non-root Python API Docker image and runtime-only dependency installation
+- [x] Add production readiness endpoint and Docker image CI build
+- [x] Document Vercel frontend, Python container, Supabase release gates, environment variables and rollback
+- [ ] Link Vercel project and configure protected preview/production environments
+- [ ] Select Python container host and configure HTTPS ingress/secrets
+- [ ] Apply migrations and validate all flows in staging
+- [ ] Complete production smoke tests and approve release
+
 ## Remaining phases
-14. Production deployment
 15. Performance, realism and cost optimization
 
 ## Validation discipline
