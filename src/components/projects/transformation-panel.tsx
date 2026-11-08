@@ -88,7 +88,7 @@ export function TransformationPanel({
     setBusy(true);
     const result = await cancelTransformationJob(job.id);
     setBusy(false);
-    if ("error" in result) setMessage(result.error);
+    if ("error" in result && result.error) setMessage(result.error);
     else setMessage("Cancellation requested. The worker will discard any unpublished result.");
   }
 
