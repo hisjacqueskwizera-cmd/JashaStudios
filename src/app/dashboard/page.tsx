@@ -18,7 +18,7 @@ function SetupNotice() {
         <p className="mt-4 text-sm leading-7 text-[#a9a49b]">The dashboard and project manager are ready, but authentication and project storage need your Supabase project settings before they can save real customer data.</p>
         <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-6 text-[#d8d4cc]">
           <li>Create or open your Supabase project.</li>
-          <li>Add the NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY values to your local environment and deployment settings.</li>
+          <li>Add the NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY values to your local environment and deployment settings.</li>
           <li>Apply the SQL migrations in the supabase/migrations folder.</li>
         </ol>
         <p className="mt-6 text-xs text-[#8e8980]">Use the Supabase anon/publishable key here. Never place the service-role key in browser-visible environment variables.</p>
