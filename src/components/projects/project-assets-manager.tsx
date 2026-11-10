@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, Trash2, UploadCloud } from "lucide-react";
 import { deleteProjectAsset, selectProjectAsset } from "@/app/actions/studio-assets";
+import { analyzeImageInBrowser } from "@/lib/image-analysis";
 
 export type ProjectAssetCard = {
   id: string;
@@ -69,6 +70,7 @@ export function ProjectAssetsManager({
 
     setBusy(true);
     try {
+      const localAnalysis = uploadType === "reference" ? await analyzeImageInBrowser(file) : null;
       const body = new FormData();
       body.set("file", file);
       body.set("assetType", uploadType);
@@ -77,10 +79,10 @@ export function ProjectAssetsManager({
         body,
         credentials: "same-origin",
       });
-      const result = await response.json() as { asset?: unknown; error?: string; analysis?: { summary?: string[]; quality?: { recommendations?: string[] } } | null };
+      const result = await response.json() as { asset?: unknown; error?: string };
       if (!response.ok) throw new Error(result.error || "Upload failed. Try again.");
       setMessage(tab === "references" ? "Reference photo uploaded." : "Studio background uploaded.");
-      setAnalysisSummary(result.analysis?.summary ?? result.analysis?.quality?.recommendations ?? []);
+      setAnalysisSummary(localAnalysis ? [...localAnalysis.summary, ...localAnalysis.recommendations] : []);
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Upload failed. Try again.");
@@ -164,7 +166,7 @@ export function ProjectAssetsManager({
 
       {error && <p role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
       {message && <p role="status" className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-200">{message}</p>}
-      {analysisSummary.length > 0 && <div className="mt-3 rounded-xl border border-[#d58a48]/20 bg-[#d58a48]/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-[#d58a48]">Python image analysis</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-[#c8c1b6]">{analysisSummary.slice(0,4).map((item,index)=><li key={index}>{item}</li>)}</ul></div>}
+      {analysisSummary.length > 0 && <div className="mt-3 rounded-xl border border-[#d58a48]/20 bg-[#d58a48]/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-[#d58a48]">On-device image analysis</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-[#c8c1b6]">{analysisSummary.slice(0,4).map((item,index)=><li key={index}>{item}</li>)}</ul></div>}
 
       {tab === "references" ? (
         currentAssets.length === 0 ? (
