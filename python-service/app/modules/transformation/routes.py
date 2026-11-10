@@ -1,8 +1,6 @@
-import hashlib
 import hmac
-import re
 
-from fastapi import APIRouter, File, Form, Header, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, File, Header, HTTPException, Response, UploadFile, status
 
 from app.modules.analysis.analyzer import InvalidReferenceImage
 from app.modules.transformation.pipeline import (
@@ -14,7 +12,6 @@ from app.modules.transformation.schemas import TransformationPreparationResponse
 from app.settings import get_settings
 
 router = APIRouter(prefix="/v1/transform", tags=["image-transformation"])
-SAFETY_IDENTIFIER_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _authorize(api_key: str | None) -> None:
@@ -34,17 +31,6 @@ async def _read_limited(file: UploadFile, limit: int) -> bytes:
     if len(content) > limit:
         raise HTTPException(status_code=413, detail="Image exceeds the configured upload size limit.")
     return content
-
-
-def _provider():
-    settings = get_settings()
-    if not settings.openai_api_key:
-        raise ProviderNotConfigured("OpenAI image generation is not configured.")
-    return OpenAIImageGenerationProvider(
-        api_key=settings.openai_api_key,
-        model=settings.openai_image_model,
-        timeout_seconds=settings.openai_image_timeout_seconds,
-    )
 
 
 @router.post("/prepare", response_model=TransformationPreparationResponse)
@@ -78,8 +64,6 @@ async def prepare_transformation_request(
 async def generate_transformation_request(
     captured_image: UploadFile = File(...),
     reference_image: UploadFile = File(...),
-    style_notes: str = Form(default="", max_length=1000),
-    safety_identifier: str | None = Form(default=None, max_length=64),
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
 ) -> Response:
     """Run the local open-source segmentation and OpenCV composition pipeline."""
@@ -87,9 +71,6 @@ async def generate_transformation_request(
     settings = get_settings()
     if not settings.transformation_enabled or not settings.local_transform_enabled:
         raise HTTPException(status_code=503, detail="Local photo transformation is not enabled.")
-    if safety_identifier and not SAFETY_IDENTIFIER_PATTERN.fullmatch(safety_identifier):
-        raise HTTPException(status_code=422, detail="Safety identifier must be a SHA-256 hex digest.")
-
     try:
         captured_bytes = await _read_limited(captured_image, settings.max_reference_upload_bytes)
         reference_bytes = await _read_limited(reference_image, settings.max_reference_upload_bytes)
