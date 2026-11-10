@@ -12,6 +12,7 @@ from uuid import uuid4
 import httpx
 from PIL import Image
 
+from app.modules.analysis.analyzer import InvalidReferenceImage
 from app.modules.transformation.pipeline import prepare_generated_image, prepare_transformation
 from app.modules.transformation.local_engine import LocalModelUnavailable, transform_photograph
 from app.settings import get_settings
@@ -112,6 +113,20 @@ class TransformationWorker:
         except httpx.RequestError:
             logger.warning("Could not clean up unpublished output for %s", path)
 
+    async def _set_progress(self, job_id: str, stage: str, progress: int) -> None:
+        updated = await self._rpc("update_transformation_job_progress", {
+            "p_job_id": job_id,
+            "p_worker_id": self.worker_id,
+            "p_stage": stage,
+            "p_progress": progress,
+        })
+        if updated is not True:
+            raise WorkerServiceError(
+                "The processing job lease was lost or the job was cancelled.",
+                retryable=False,
+                code="job_lease_lost",
+            )
+
     async def run_once(self) -> bool:
         claimed = await self._rpc("claim_transformation_job", {
             "p_worker_id": self.worker_id,
@@ -135,9 +150,11 @@ class TransformationWorker:
             reference = snapshot.get("reference_image") or {}
             capture_path = _safe_job_path(capture.get("storage_path"), user_id, project_id)
             reference_path = _safe_job_path(reference.get("storage_path"), user_id, project_id)
+            await self._set_progress(job_id, "downloading", 10)
             captured_bytes, reference_bytes = await asyncio.gather(
                 self._download(capture_path), self._download(reference_path)
             )
+            await self._set_progress(job_id, "analyzing", 25)
             _, _, readiness = prepare_transformation(
                 captured_bytes, reference_bytes, self.settings.max_reference_pixels,
                 generation_provider="local_opencv_rembg",
@@ -149,10 +166,12 @@ class TransformationWorker:
                     retryable=False, code="capture_quality_retake_recommended",
                 )
 
+            await self._set_progress(job_id, "segmenting", 45)
             # Local U2Net segmentation + OpenCV compositing; no paid AI API is called.
             output_bytes, local_model = transform_photograph(
                 captured_bytes, reference_bytes, self.settings.max_reference_pixels
             )
+            await self._set_progress(job_id, "validating", 80)
             output_bytes, _ = prepare_generated_image(output_bytes, self.settings.max_reference_pixels)
             if len(output_bytes) > self.settings.max_reference_upload_bytes:
                 raise WorkerServiceError(
@@ -165,6 +184,7 @@ class TransformationWorker:
             # Each attempt gets its own immutable path so an expired worker cannot
             # overwrite a later attempt's successfully published image.
             output_path = f"{user_id}/{project_id}/generated/{job_id}-attempt-{attempt_count}.webp"
+            await self._set_progress(job_id, "uploading", 92)
             await self._upload(output_path, output_bytes)
             completed = await self._rpc("complete_transformation_job", {
                 "p_job_id": job_id, "p_worker_id": self.worker_id,
@@ -177,6 +197,11 @@ class TransformationWorker:
                 logger.info("Job %s was cancelled or its lease was lost before publishing.", job_id)
             else:
                 logger.info("Transformation job %s completed (%sx%s).", job_id, width, height)
+        except InvalidReferenceImage as exc:
+            if output_path:
+                await self._delete(output_path)
+            logger.info("Invalid photo input for job %s: %s", job_id, exc)
+            await self._record_failure(job_id, "invalid_input_image", False, attempt_count)
         except LocalModelUnavailable as exc:
             if output_path:
                 await self._delete(output_path)
