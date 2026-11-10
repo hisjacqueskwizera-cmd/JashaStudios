@@ -27,7 +27,7 @@ function getSimilarity(current:Landmark[],target:Landmark[]){
 }
 function getGuidance(current:Landmark[],target:Landmark[]|null,score:number|null){
  if(!TRACKED.every(index=>visible(current[index])))return "Step back slightly and keep your shoulders, hips and legs visible.";
- if(!target)return "Keep your body inside the frame. Select a reference photo on desktop to match its pose.";
+ if(!target)return "Keep your body inside the frame. Select a reference photo to compare poses.";
  if(score===null)return "Move into clear view so the coach can compare your pose.";
  const tips:string[]=[];
  for(const [index,side] of [[15,"left"],[16,"right"]] as Array<[number,string]>){
@@ -59,19 +59,15 @@ function draw(canvas:HTMLCanvasElement,video:HTMLVideoElement,points:Landmark[])
 }
 export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoElement|null>;token:string|null;active:boolean}){
  const canvasRef=useRef<HTMLCanvasElement|null>(null);
- const [status,setStatus]=useState("Preparing pose coach…");
+ const [status,setStatus]=useState("Preparing on-device pose coach…");
  const [instruction,setInstruction]=useState("Stand where your full pose is visible.");
  const [score,setScore]=useState<number|null>(null);
  const [hasReference,setHasReference]=useState(false);
  useEffect(()=>{
   const videoCandidate=videoRef.current,canvasCandidate=canvasRef.current;
   if(!active||!token||!videoCandidate||!canvasCandidate)return;
-  // Capture non-null DOM elements before creating async callbacks. TypeScript
-  // cannot preserve ref-derived narrowing inside the nested animation loop.
-  const videoElement:HTMLVideoElement=videoCandidate;
-  const canvasElement:HTMLCanvasElement=canvasCandidate;
-  let cancelled=false,frameId=0,lastInference=0,lastPythonCoach=0,pythonCoachPending=false,pythonCoachSequence=0;
-  let landmarker:Landmarker|null=null,target:Landmark[]|null=null,referenceUrl:string|null=null;
+  const videoElement:HTMLVideoElement=videoCandidate,canvasElement:HTMLCanvasElement=canvasCandidate;
+  let cancelled=false,frameId=0,lastInference=0,landmarker:Landmarker|null=null,target:Landmark[]|null=null,referenceUrl:string|null=null;
   async function initialize(){
    try{
     setStatus("Loading on-device pose model…");
@@ -90,21 +86,13 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
     }
     if(cancelled)return;
     setHasReference(Boolean(target));
-    setStatus(target?"Live pose matching · reference loaded":"Live pose tracking · no reference selected");
+    setStatus(target?"On-device virtual photographer · reference loaded":"On-device pose tracking · no reference selected");
     const loop=(timestamp:number)=>{
      if(cancelled||!landmarker)return;
      if(videoElement.readyState>=HTMLMediaElement.HAVE_CURRENT_DATA&&timestamp-lastInference>=120){
       lastInference=timestamp;
       const current=landmarker.detectForVideo(videoElement,timestamp).landmarks?.[0];
-      if(current){draw(canvasElement,videoElement,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));
-      if(target&&timestamp-lastPythonCoach>=900&&!pythonCoachPending){lastPythonCoach=timestamp;pythonCoachPending=true;const sequence=++pythonCoachSequence;
-       void fetch("/api/vision/coach",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({reference_landmarks:target,captured_landmarks:current})})
-        .then(async response=>response.ok?response.json():null)
-        .then(result=>{if(!cancelled&&sequence===pythonCoachSequence&&result?.status==="coaching"){setStatus("Python virtual photographer · live guidance");setScore(result.similarity_score??next);setInstruction(Array.isArray(result.instructions)&&result.instructions.length?result.instructions.join(" · "):getGuidance(current,target,next));}})
-        .catch(()=>{})
-        .finally(()=>{pythonCoachPending=false;});
-      }
-     }
+      if(current){draw(canvasElement,videoElement,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));}
       else{setScore(null);setInstruction("Step into the camera frame so your pose can be detected.");canvasElement.getContext("2d")?.clearRect(0,0,canvasElement.width,canvasElement.height);}
      }
      frameId=requestAnimationFrame(loop);
