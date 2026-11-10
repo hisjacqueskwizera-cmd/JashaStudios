@@ -86,6 +86,7 @@ Updated: 2026-11-08
 - [x] Restrained LAB colour treatment and WebP output validation
 - [x] Worker and FastAPI transformation routes no longer require paid external AI credentials
 - [x] Added lease-scoped worker progress reporting and non-retryable invalid-image handling
+- [x] Added RLS-protected Supabase Realtime subscriptions for captures, phone pairing and processing-job updates
 - [x] Mocked tests for provider request, input ordering, error mapping and output validation
 - [x] Durable job schema, queue RPCs, worker runtime and desktop workflow scaffold
 - [x] Owner-scoped generated-image storage policy and attempt-specific output paths
