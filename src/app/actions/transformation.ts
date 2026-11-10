@@ -19,11 +19,11 @@ export async function enqueueTransformationJob(input: {
     !IDEMPOTENCY_KEY.test(input.idempotencyKey) ||
     (input.styleNotes?.length ?? 0) > 1000
   ) {
-    return { error: "Check the selected project, images and transformation notes." as const };
+    return { error: "Check the selected project and images." as const };
   }
 
   if (process.env.TRANSFORMATION_ENABLED !== "true") {
-    return { error: "AI transformation is currently a placeholder and has not been enabled yet." as const };
+    return { error: "Local photo processing is not enabled. Configure the U2Net runtime and Supabase worker first." as const };
   }
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { error: "Supabase is not configured." as const };

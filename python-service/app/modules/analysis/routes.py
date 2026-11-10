@@ -2,6 +2,7 @@ import hmac
 from fastapi import APIRouter, File, Header, HTTPException, UploadFile, status
 from app.modules.analysis.analyzer import InvalidReferenceImage, analyze_reference, decode_reference_image
 from app.modules.analysis.schemas import ReferenceAnalysisResponse
+from app.modules.analysis.photographer import VirtualPhotographerRequest, VirtualPhotographerResponse, coach_pose
 from app.settings import get_settings
 
 router = APIRouter(prefix="/v1/analyze", tags=["reference-analysis"])
@@ -32,3 +33,13 @@ async def analyze_reference_image(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     finally:
         await file.close()
+
+
+@router.post("/virtual-photographer", response_model=VirtualPhotographerResponse)
+async def virtual_photographer(
+    payload: VirtualPhotographerRequest,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> VirtualPhotographerResponse:
+    """Compare MediaPipe pose landmarks and return actionable Python coaching cues."""
+    _authorize(x_api_key)
+    return coach_pose(payload)

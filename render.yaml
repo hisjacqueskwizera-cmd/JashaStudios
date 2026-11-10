@@ -13,6 +13,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: SERVICE_MODE
+        value: api
       - key: PORT
         value: "10000"
       - key: VISION_API_KEY
@@ -24,4 +26,37 @@ services:
       - key: MAX_REFERENCE_PIXELS
         value: "40000000"
       - key: TRANSFORMATION_ENABLED
-        value: "false"
+        value: "true"
+      - key: LOCAL_TRANSFORM_ENABLED
+        value: "true"
+
+  - type: worker
+    name: jasha-photo-worker
+    runtime: docker
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./python-service/Dockerfile
+    dockerContext: ./python-service
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SERVICE_MODE
+        value: worker
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: TRANSFORMATION_ENABLED
+        value: "true"
+      - key: LOCAL_TRANSFORM_ENABLED
+        value: "true"
+      - key: MAX_REFERENCE_UPLOAD_BYTES
+        value: "15728640"
+      - key: MAX_REFERENCE_PIXELS
+        value: "40000000"
+      - key: TRANSFORMATION_JOB_LEASE_SECONDS
+        value: "300"
+      - key: TRANSFORMATION_POLL_INTERVAL_SECONDS
+        value: "3"
+      - key: TRANSFORMATION_MAX_ATTEMPTS
+        value: "3"

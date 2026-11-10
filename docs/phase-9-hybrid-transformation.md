@@ -1,32 +1,36 @@
-# Phase 9 — Hybrid AI Photo Transformation
+# Local Photo Transformation
 
-## Scope of this increment
+## Implemented in the current MVP branch
 
-This commit establishes the safe transformation-preparation foundation. It does not claim to generate an AI-edited photograph yet.
+Jasha Studios now has a local, non-generative photo transformation path. It does not call a paid image-generation API.
 
-## Implemented
+- FastAPI exposes `POST /v1/transform/prepare` for safe input validation and quality diagnostics.
+- FastAPI exposes `POST /v1/transform/generate` for local transformation when `TRANSFORMATION_ENABLED=true` and `LOCAL_TRANSFORM_ENABLED=true`.
+- The background worker claims queued jobs from Supabase and processes them without an external AI provider.
+- A worker-only, lease-scoped RPC reports real processing milestones (download, analysis, segmentation, validation and upload) to the desktop UI; stale or cancelled workers cannot update progress.
+- The local engine uses the open-source rembg U2Net model to segment the customer and reference subjects.
+- OpenCV inpaints the reference subject region to create a scene plate.
+- The customer's segmented pixels are scaled and positioned into the reference subject bounds while retaining their source identity pixels.
+- A restrained LAB colour treatment aligns the scene without face generation or body warping.
+- Results are normalized to WebP and stored in the user's private project path by the existing worker.
+- The model session is cached within the worker process.
 
-- A FastAPI `POST /v1/transform/prepare` endpoint validates both the customer's captured image and the selected reference image.
-- Both files are bounded by the configured upload and pixel limits, decoded by Pillow, checked against supported JPEG/PNG/WebP formats, and EXIF-normalized.
-- Preparation resizes images only when their longest edge exceeds 2048 pixels. It preserves aspect ratio and does not crop or overwrite the original stored uploads.
-- Deterministic OpenCV checks report sharpness, brightness, contrast, resolution flags and retake recommendations.
-- A provider protocol defines the future asynchronous generation boundary. No fake provider or mock production image output is registered.
-- The endpoint requires the existing internal vision API key when configured and fails closed in production if authentication is not configured.
-- The processing-jobs migration adds idempotency, immutable input/settings snapshots, worker leases, retry scheduling and cancellation-request metadata. Existing RLS remains in force; browser clients do not gain write access.
-- Unit and API tests cover normalization, resizing, image validation, provider readiness and API-key protection.
+## Honest capability boundary
 
-## Not implemented yet
+This is a real computer-vision compositing workflow, not a diffusion-based generative model. It can recreate a scene/background, approximate subject scale and placement, and apply restrained colour treatment. It does not synthesize a new pose, generate missing body parts, relight a person with physically accurate lighting, or guarantee that a complex reference can be reproduced. The original captured subject pixels remain the identity source. Results still require human review.
 
-- No image-generation provider is configured or called.
-- No person-segmentation model, face/identity-preservation model, relighting model or generative background model is selected.
-- No GPU worker, Redis queue or Celery worker is deployed.
-- No customer transformation job is created or charged from the desktop UI.
-- No generated output is published to customer storage.
+For best results, capture the customer against a simple background with good separation, use a reference with one clearly visible person, and avoid large pose or camera-angle differences.
 
-## Why the provider is intentionally not fabricated
+## Runtime requirements
 
-The platform must not return the input photo as if it were transformed, or label a synthetic test result as customer output. A real provider adapter must be selected, benchmarked on consented images, and configured with server-side credentials before generation is enabled.
+- Python 3.11.
+- OpenCV, Pillow and NumPy.
+- `rembg[cpu]` and its ONNX Runtime CPU dependency.
+- Sufficient memory for U2Net inference; CPU processing may take several seconds or longer.
+- The first U2Net model load may need outbound network access to download model weights.
+- Set `LOCAL_TRANSFORM_ENABLED=true` and `TRANSFORMATION_ENABLED=true` on the API/worker host.
+- Set `SUPABASE_URL` and server-only `SUPABASE_SECRET_KEY` for the background worker.
 
 ## Verification
 
-Run the Python service tests with `python -m pytest` from `python-service/`. GitHub Actions remains authoritative for frontend TypeScript, ESLint, Next.js production build and Python tests. Apply the migration to a non-production Supabase environment first; do not run `db reset` against live data.
+Run `python -m pytest` from `python-service/`. Tests cover image preparation, API validation and a deterministic compositor test with a mocked segmentation mask. Before pitching live processing, run the worker against a configured staging Supabase project using consented capture/reference pairs and evaluate mask edges, scene inpainting, subject placement, CPU time and memory. Do not claim generative AI reconstruction or perfect identity/lighting fidelity.

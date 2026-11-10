@@ -101,7 +101,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{project.name}</h1>
             <p className="mt-2 text-sm text-[#8e8980]">{project.category || "General photography"} · {project.status.replaceAll("_", " ")}</p>
           </div>
-          <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-[#a9a49b]">Phase 4 · Asset library</span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-[#a9a49b]">Studio workspace</span>
         </div>
         <ProjectAssetsManager
           projectId={project.id}

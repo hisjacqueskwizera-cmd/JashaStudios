@@ -2,6 +2,7 @@
 import { useEffect,useState,useTransition } from "react";
 import { AlertCircle,CheckCircle2,Clock3,LoaderCircle,QrCode,RefreshCw,ShieldCheck,Smartphone,Unplug } from "lucide-react";
 import { createDevicePairing,getDevicePairingStatus,revokeDevicePairing } from "@/app/actions/device-pairing";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type PairingState={challengeId:string;sessionId:string;expiresAt:string;qrDataUrl:string;challengeStatus:string;sessionStatus:string;deviceLabel:string|null};
 export function DevicePairing({projectId}:{projectId:string}){
   const [pairing,setPairing]=useState<PairingState|null>(null);
@@ -22,8 +23,16 @@ export function DevicePairing({projectId}:{projectId:string}){
       if(active&&"success" in result&&result.success&&typeof result.challengeStatus==="string"&&typeof result.sessionStatus==="string"&&typeof result.expiresAt==="string") setPairing(current=>current?{...current,challengeStatus:result.challengeStatus,sessionStatus:result.sessionStatus,expiresAt:result.expiresAt,deviceLabel:result.deviceLabel??null}:current);
     };
     void refresh();
-    const timer=window.setInterval(()=>void refresh(),2500);
-    return ()=>{active=false;window.clearInterval(timer);};
+    let cleanupRealtime=()=>{};
+    try{
+      const supabase=createSupabaseBrowserClient();
+      const channel=supabase.channel("studio-session-"+sessionId)
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"studio_sessions",filter:"id=eq."+sessionId},()=>void refresh())
+        .subscribe();
+      cleanupRealtime=()=>{void supabase.removeChannel(channel);};
+    }catch{}
+    const timer=window.setInterval(()=>void refresh(),10000);
+    return ()=>{active=false;window.clearInterval(timer);cleanupRealtime();};
   },[projectId,challengeId,sessionId,connected,expired]);
 
   useEffect(()=>{

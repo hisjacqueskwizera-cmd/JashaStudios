@@ -8,9 +8,7 @@ class Settings(BaseModel):
     cors_origins_raw: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
     vision_api_key: str = Field(default="", alias="VISION_API_KEY")
     transformation_enabled: bool = Field(default=False, alias="TRANSFORMATION_ENABLED")
-    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
-    openai_image_model: str = Field(default="gpt-image-2.5-sunburst", alias="OPENAI_IMAGE_MODEL")
-    openai_image_timeout_seconds: float = Field(default=240, ge=30, le=600, alias="OPENAI_IMAGE_TIMEOUT_SECONDS")
+    local_transform_enabled: bool = Field(default=True, alias="LOCAL_TRANSFORM_ENABLED")
     max_reference_upload_bytes: int = Field(default=15 * 1024 * 1024, alias="MAX_REFERENCE_UPLOAD_BYTES")
     max_reference_pixels: int = Field(default=40_000_000, alias="MAX_REFERENCE_PIXELS")
     supabase_url: str = Field(default="", alias="SUPABASE_URL")
@@ -32,9 +30,7 @@ def get_settings() -> Settings:
         "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "http://localhost:3000"),
         "VISION_API_KEY": os.getenv("VISION_API_KEY", ""),
         "TRANSFORMATION_ENABLED": os.getenv("TRANSFORMATION_ENABLED", "false"),
-        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", ""),
-        "OPENAI_IMAGE_MODEL": os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2.5-sunburst"),
-        "OPENAI_IMAGE_TIMEOUT_SECONDS": os.getenv("OPENAI_IMAGE_TIMEOUT_SECONDS", "240"),
+        "LOCAL_TRANSFORM_ENABLED": os.getenv("LOCAL_TRANSFORM_ENABLED", "true"),
         "MAX_REFERENCE_UPLOAD_BYTES": os.getenv("MAX_REFERENCE_UPLOAD_BYTES", str(15 * 1024 * 1024)),
         "MAX_REFERENCE_PIXELS": os.getenv("MAX_REFERENCE_PIXELS", "40000000"),
         "SUPABASE_URL": os.getenv("SUPABASE_URL", ""),
