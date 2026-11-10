@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AlertCircle, Download, LoaderCircle, WandSparkles } from "lucide-react";
-import { getBrowserTransformationInputs } from "@/app/actions/transformation";
+import { getBrowserTransformationInputs, listProjectCaptures } from "@/app/actions/transformation";
 
 type CaptureOption = { id: string; createdAt: string; byteSize: number };
 type Segmenter = {
@@ -110,11 +110,30 @@ export function TransformationPanel({
   captures: CaptureOption[];
   enabled?: boolean;
 }) {
+  const [availableCaptures, setAvailableCaptures] = useState(captures);
   const [captureId, setCaptureId] = useState(captures[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState("");
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const result = await listProjectCaptures(projectId);
+      if (!active || !("success" in result) || !result.success) return;
+      setAvailableCaptures(result.captures);
+      setCaptureId(current => current && result.captures.some(item => item.id === current)
+        ? current : (result.captures[0]?.id ?? ""));
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [projectId]);
+
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
   async function start() {
     if (!selectedReference || !captureId) return;
@@ -156,9 +175,9 @@ export function TransformationPanel({
         </div>
         <label className="rounded-xl border border-white/10 bg-black/15 p-4">
           <span className="text-[10px] uppercase tracking-[0.15em] text-[#8e8980]">Customer capture</span>
-          <select value={captureId} onChange={event => setCaptureId(event.target.value)} disabled={captures.length === 0 || busy} className="mt-2 w-full bg-transparent text-sm text-white outline-none disabled:opacity-50">
-            {captures.length === 0 ? <option value="">No phone captures yet</option> : null}
-            {captures.map(capture => <option key={capture.id} value={capture.id} className="bg-[#171715]">{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(capture.createdAt))} · {(capture.byteSize / 1024 / 1024).toFixed(1)} MB</option>)}
+          <select value={captureId} onChange={event => setCaptureId(event.target.value)} disabled={availableCaptures.length === 0 || busy} className="mt-2 w-full bg-transparent text-sm text-white outline-none disabled:opacity-50">
+            {availableCaptures.length === 0 ? <option value="">No phone captures yet</option> : null}
+            {availableCaptures.map(capture => <option key={capture.id} value={capture.id} className="bg-[#171715]">{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(capture.createdAt))} · {(capture.byteSize / 1024 / 1024).toFixed(1)} MB</option>)}
           </select>
         </label>
       </div>
