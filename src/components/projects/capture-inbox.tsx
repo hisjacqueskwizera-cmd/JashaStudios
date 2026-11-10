@@ -3,6 +3,7 @@ import { useEffect,useState } from "react";
 import Image from "next/image";
 import { Camera,ImageOff,LoaderCircle } from "lucide-react";
 import { getProjectCaptures } from "@/app/actions/captures";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type Capture={id:string;url:string|null;createdAt:string;byteSize:number};
 export function CaptureInbox({projectId}:{projectId:string}){
  const [captures,setCaptures]=useState<Capture[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState<string|null>(null);
@@ -14,11 +15,20 @@ export function CaptureInbox({projectId}:{projectId:string}){
    else if("error" in result)setError(result.error);
    setLoading(false);
   };
-  void refresh();const timer=window.setInterval(()=>void refresh(),4000);
-  return ()=>{active=false;window.clearInterval(timer);};
+  void refresh();
+  let cleanupRealtime=()=>{};
+  try{
+   const supabase=createSupabaseBrowserClient();
+   const channel=supabase.channel("capture-inbox-"+projectId)
+    .on("postgres_changes",{event:"*",schema:"public",table:"captured_images",filter:"project_id=eq."+projectId},()=>void refresh())
+    .subscribe();
+   cleanupRealtime=()=>{void supabase.removeChannel(channel);};
+  }catch{}
+  const timer=window.setInterval(()=>void refresh(),15000);
+  return ()=>{active=false;window.clearInterval(timer);cleanupRealtime();};
  },[projectId]);
  return <section className="mt-8 rounded-3xl border border-white/10 bg-[#171715] p-5 sm:p-7">
-  <div className="flex items-center justify-between gap-3"><div><p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d58a48]"><Camera size={13}/> Live capture inbox</p><h2 className="mt-2 text-xl font-semibold">Photos from your phone</h2><p className="mt-1 text-xs text-[#8e8980]">This project checks for new captures automatically.</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-[#a9a49b]">Auto sync · 4 sec</span></div>
+  <div className="flex items-center justify-between gap-3"><div><p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d58a48]"><Camera size={13}/> Live capture inbox</p><h2 className="mt-2 text-xl font-semibold">Photos from your phone</h2><p className="mt-1 text-xs text-[#8e8980]">New phone captures appear automatically through Supabase Realtime.</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-[#a9a49b]">Realtime sync</span></div>
   {error&&<p role="status" className="mt-4 text-xs text-amber-200">{error}</p>}
   {loading?<div className="flex items-center gap-2 py-10 text-sm text-[#8e8980]"><LoaderCircle size={16} className="animate-spin"/> Loading captures…</div>
    :captures.length===0?<div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-white/10 py-10 text-center"><ImageOff size={26} className="text-[#77736c]"/><p className="mt-3 text-sm text-[#a9a49b]">No photos captured yet</p><p className="mt-1 text-xs text-[#77736c]">Pair your phone and approve a photo to see it here.</p></div>
