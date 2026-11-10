@@ -111,13 +111,12 @@ Updated: 2026-11-08
 
 ## Phase 12 — Admin dashboard
 - [x] Admin-only route guarded by Supabase app_metadata.role
-- [x] Platform metrics for users, projects, captures, generated images, jobs and recorded revenue
-- [x] Customer directory with account status, project counts and credit balances
+- [x] Platform metrics for users, projects, captures, generated images and processing jobs
+- [x] Customer directory with account status and project counts
 - [x] Suspend/reactivate accounts through Supabase Auth ban state and profile status
-- [x] Edit billing product prices, monthly credit allowances and availability
-- [x] Audited manual credit adjustments using the immutable credit ledger
-- [x] Recent payment and transformation-job monitoring
-- [x] Administrator audit trail for sensitive account, product and credit changes
+- [x] Transformation-job monitoring
+- [x] Administrator audit trail for account and operational changes
+- [x] Billing and credit controls removed from the current MVP
 - [x] Admin role is never assignable from the customer-facing UI
 - [ ] Apply Phase 12 migrations and assign the first administrator in Supabase
 - [ ] Verify admin permission boundaries and operational actions against staging
