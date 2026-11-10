@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { AlertCircle, CheckCircle2, LoaderCircle, WandSparkles, XCircle } from "lucide-react";
 import {
@@ -72,10 +73,19 @@ export function TransformationPanel({
       } : null);
     };
     void poll();
-    const timer = window.setInterval(() => void poll(), 2500);
+    let cleanupRealtime = () => {};
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const channel = supabase.channel("transformation-job-" + job.id)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "processing_jobs", filter: "id=eq." + job.id }, () => void poll())
+        .subscribe();
+      cleanupRealtime = () => { void supabase.removeChannel(channel); };
+    } catch {}
+    const timer = window.setInterval(() => void poll(), 10000);
     return () => {
       active = false;
       window.clearInterval(timer);
+      cleanupRealtime();
     };
   }, [job?.id, job?.status]);
 
