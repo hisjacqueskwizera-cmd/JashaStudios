@@ -33,7 +33,6 @@ export function TransformationPanel({
 }) {
   const [availableCaptures, setAvailableCaptures] = useState(captures);
   const [captureId, setCaptureId] = useState(captures[0]?.id ?? "");
-  const [styleNotes, setStyleNotes] = useState("");
   const [job, setJob] = useState<JobState | null>(null);
   const [preview, setPreview] = useState<GeneratedPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -90,7 +89,6 @@ export function TransformationPanel({
       referenceImageId: selectedReference.id,
       capturedImageId: captureId,
       idempotencyKey: crypto.randomUUID(),
-      styleNotes,
     });
     setBusy(false);
     if (!("success" in result) || !result.success) {
@@ -125,16 +123,16 @@ export function TransformationPanel({
           <WandSparkles size={19} />
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d58a48]">AI transformation</p>
-          <h2 className="mt-1 text-xl font-semibold">Recreate the reference style</h2>
-          <p className="mt-1 text-sm leading-6 text-[#8e8980]">Your capture is the identity source. The selected reference guides the scene, pose, lighting and photographic treatment. Every result still needs human review.</p>
-          {!enabled && <p className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-200">Preview placeholder · AI generation is disabled until Phase 9 is activated.</p>}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d58a48]">Local photo transformation</p>
+          <h2 className="mt-1 text-xl font-semibold">Compose your capture into the reference scene</h2>
+          <p className="mt-1 text-sm leading-6 text-[#8e8980]">Open-source U2Net segmentation and OpenCV compositing place your captured subject into the reference scene. Your captured pixels remain the identity source. This does not synthesize a new pose or guarantee relighting; review every result.</p>
+          {!enabled && <p className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-200">Local processing is disabled until the server worker and Supabase queue are configured.</p>}
         </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-black/15 p-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-[#8e8980]">Selected style reference</p>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#8e8980]">Selected scene reference</p>
           {selectedReference ? (
             <p className="mt-2 truncate text-sm font-medium text-white">{selectedReference.name}</p>
           ) : (
@@ -160,19 +158,6 @@ export function TransformationPanel({
         </label>
       </div>
 
-      <label className="mt-4 block">
-        <span className="text-xs font-medium text-[#c8c1b6]">Additional direction <span className="font-normal text-[#77736c]">(optional)</span></span>
-        <textarea
-          value={styleNotes}
-          onChange={(event) => setStyleNotes(event.target.value.slice(0, 1000))}
-          disabled={running || busy}
-          rows={3}
-          placeholder="For example: keep the background soft, use warm window light, preserve natural skin texture…"
-          className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white outline-none placeholder:text-[#666159] focus:border-[#d58a48]/60 disabled:opacity-50"
-        />
-        <span className="mt-1 block text-right text-[10px] text-[#77736c]">{styleNotes.length}/1000</span>
-      </label>
-
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -181,7 +166,7 @@ export function TransformationPanel({
           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#d58a48] px-5 text-sm font-semibold text-[#17130f] transition hover:bg-[#e29b5a] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {busy ? <LoaderCircle size={16} className="animate-spin" /> : <WandSparkles size={16} />}
-          {enabled ? "Start transformation" : "AI transformation coming soon"}
+          {enabled ? "Start local transformation" : "Local processing unavailable"}
         </button>
         {running && (
           <button type="button" onClick={() => void cancel()} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-sm text-[#c8c1b6] hover:bg-white/5 disabled:opacity-50">
@@ -211,8 +196,8 @@ export function TransformationPanel({
           {job.status === "failed" && <p className="mt-3 text-xs text-amber-200">This transformation could not be completed. Review the capture quality and try again. ({job.error_code ?? "unknown_error"})</p>}
           {preview?.url && job.status === "succeeded" && (
             <div className="mt-5">
-              <Image src={preview.url} alt="Generated studio photograph pending human review" width={1200} height={1600} unoptimized className="max-h-[560px] w-auto max-w-full rounded-xl object-contain" />
-              <p className="mt-2 text-xs text-[#8e8980]">Generated image · {preview.width} × {preview.height} · Review identity, anatomy and visual quality before use.</p>
+              <Image src={preview.url} alt="Local studio composite pending human review" width={1200} height={1600} unoptimized className="max-h-[560px] w-auto max-w-full rounded-xl object-contain" />
+              <p className="mt-2 text-xs text-[#8e8980]">Local composite · {preview.width} × {preview.height} · Review identity, anatomy and visual quality before use.</p>
             </div>
           )}
         </div>
