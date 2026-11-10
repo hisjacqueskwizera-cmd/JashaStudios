@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{8,128}$/;
@@ -148,7 +149,14 @@ export async function getBrowserTransformationInputs(input: {
   ]);
   if (!reference || !capture) return { error: "One of the selected images could not be found." as const };
 
-  const bucket = supabase.storage.from("studio-assets");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseSecret = process.env.SUPABASE_SECRET_KEY;
+  if (!supabaseUrl || !supabaseSecret) return { error: "The server-side Supabase storage key is not configured." as const };
+  // The paired-phone capture path is intentionally not readable by browser sessions.
+  // After owner-scoped row checks above, use the existing server-only Supabase key
+  // to mint short-lived read URLs without adding a separate vision/API credential.
+  const storageAdmin = createClient(supabaseUrl, supabaseSecret, { auth: { persistSession: false, autoRefreshToken: false } });
+  const bucket = storageAdmin.storage.from("studio-assets");
   const [{ data: referenceUrl, error: referenceError }, { data: captureUrl, error: captureError }] = await Promise.all([
     bucket.createSignedUrl(reference.storage_path, 300),
     bucket.createSignedUrl(capture.storage_path, 300),
