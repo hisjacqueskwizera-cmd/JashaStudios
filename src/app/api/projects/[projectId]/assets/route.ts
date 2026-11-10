@@ -101,24 +101,7 @@ export async function POST(
 
   const { data: signed } = await bucket.createSignedUrl(storagePath, 600);
 
-  let analysis: { summary?: string[]; quality?: { recommendations?: string[] } } | null = null;
-  if (assetType === "reference" && process.env.VISION_API_URL && process.env.VISION_API_KEY) {
-    try {
-      const analysisForm = new FormData();
-      analysisForm.set("file", new Blob([new Uint8Array(bytes).buffer], { type: file.type }), file.name);
-      const analysisResponse = await fetch(new URL("/v1/analyze/reference", process.env.VISION_API_URL), {
-        method: "POST",
-        headers: { "X-API-Key": process.env.VISION_API_KEY },
-        body: analysisForm,
-        cache: "no-store",
-        signal: AbortSignal.timeout(12000),
-      });
-      if (analysisResponse.ok) analysis = await analysisResponse.json();
-      else console.warn("[python-reference-analysis]", { status: analysisResponse.status });
-    } catch (cause) {
-      console.warn("[python-reference-analysis] unavailable", cause instanceof Error ? cause.message : "unknown error");
-    }
-  }
+
 
   return NextResponse.json({
     asset: {
@@ -130,6 +113,5 @@ export async function POST(
       createdAt: insertResult.data.created_at,
       type: assetType,
     },
-    analysis,
   }, { status: 201 });
 }
