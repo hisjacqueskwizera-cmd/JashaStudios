@@ -13,6 +13,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: SERVICE_MODE
+        value: api
       - key: PORT
         value: "10000"
       - key: VISION_API_KEY
@@ -39,6 +41,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: SERVICE_MODE
+        value: worker
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SECRET_KEY
