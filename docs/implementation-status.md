@@ -85,6 +85,7 @@ Updated: 2026-11-08
 - [x] Reference subject placement and scale matching while retaining customer foreground pixels
 - [x] Restrained LAB colour treatment and WebP output validation
 - [x] Worker and FastAPI transformation routes no longer require paid external AI credentials
+- [x] Added lease-scoped worker progress reporting and non-retryable invalid-image handling
 - [x] Mocked tests for provider request, input ordering, error mapping and output validation
 - [x] Durable job schema, queue RPCs, worker runtime and desktop workflow scaffold
 - [x] Owner-scoped generated-image storage policy and attempt-specific output paths
