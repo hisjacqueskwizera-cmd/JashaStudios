@@ -82,6 +82,7 @@ def _restrained_scene_grade(image: Image.Image, reference: Image.Image) -> Image
         matched = (source - float(source.mean())) * min(target_std / source_std, 1.25)
         matched += float(target.mean())
         out_lab[:, :, channel] = source * 0.78 + matched * 0.22
+    # Convert back using uint8 LAB encoding; float LAB uses a different numeric range.
     graded = cv2.cvtColor(np.clip(out_lab, 0, 255).astype(np.uint8), cv2.COLOR_LAB2RGB)
     return Image.fromarray(graded, mode="RGB").convert("RGBA")
 
@@ -108,8 +109,7 @@ def transform_photograph(
         reference_box = _subject_bounds(reference_cutout)
         background = _reference_background(reference, reference_cutout)
 
-        ref_width, ref_height = reference.size
-        target_width = max(1, reference_box[2] - reference_box[0])
+            target_width = max(1, reference_box[2] - reference_box[0])
         target_height = max(1, reference_box[3] - reference_box[1])
         source_subject = captured_cutout.crop(capture_box)
 
