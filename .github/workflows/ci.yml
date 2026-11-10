@@ -2,7 +2,7 @@ name: Foundation CI
 
 on:
   push:
-    branches: [main, phase-1-foundation]
+    branches: [main, phase-1-foundation, "build/**"]
   pull_request:
     branches: [main]
 
