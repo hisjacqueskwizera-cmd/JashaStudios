@@ -118,3 +118,43 @@ export async function listProjectCaptures(projectId: string) {
     })),
   };
 }
+
+
+export async function getBrowserTransformationInputs(input: {
+  projectId: string;
+  referenceImageId: string;
+  capturedImageId: string;
+}) {
+  if (!UUID.test(input.projectId) || !UUID.test(input.referenceImageId) || !UUID.test(input.capturedImageId)) {
+    return { error: "Choose valid project images." as const };
+  }
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "Supabase is not configured." as const };
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { error: "Please sign in again." as const };
+
+  const { data: project } = await supabase.from("projects")
+    .select("id,selected_reference_image_id")
+    .eq("id", input.projectId).eq("user_id", user.id).maybeSingle();
+  if (!project || project.selected_reference_image_id !== input.referenceImageId) {
+    return { error: "Select your reference image in this project first." as const };
+  }
+
+  const [{ data: reference }, { data: capture }] = await Promise.all([
+    supabase.from("reference_images").select("storage_path,mime_type")
+      .eq("id", input.referenceImageId).eq("project_id", input.projectId).eq("user_id", user.id).maybeSingle(),
+    supabase.from("captured_images").select("storage_path,mime_type")
+      .eq("id", input.capturedImageId).eq("project_id", input.projectId).eq("user_id", user.id).maybeSingle(),
+  ]);
+  if (!reference || !capture) return { error: "One of the selected images could not be found." as const };
+
+  const bucket = supabase.storage.from("studio-assets");
+  const [{ data: referenceUrl, error: referenceError }, { data: captureUrl, error: captureError }] = await Promise.all([
+    bucket.createSignedUrl(reference.storage_path, 300),
+    bucket.createSignedUrl(capture.storage_path, 300),
+  ]);
+  if (referenceError || captureError || !referenceUrl?.signedUrl || !captureUrl?.signedUrl) {
+    return { error: "Could not securely load the selected images." as const };
+  }
+  return { success: true as const, referenceUrl: referenceUrl.signedUrl, captureUrl: captureUrl.signedUrl };
+}
