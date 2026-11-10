@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from functools import lru_cache
 
 import cv2
 import numpy as np
@@ -15,15 +16,25 @@ class LocalModelUnavailable(RuntimeError):
     """The open-source foreground model is not installed or cannot be loaded."""
 
 
+@lru_cache(maxsize=1)
+def _segmentation_session():
+    try:
+        from rembg import new_session
+        return new_session("u2net")
+    except ImportError as exc:
+        raise LocalModelUnavailable("Install rembg[cpu] to enable local subject segmentation.") from exc
+    except Exception as exc:
+        raise LocalModelUnavailable("The U2Net model could not be loaded.") from exc
+
+
 def _rgba_cutout(data: bytes, max_pixels: int) -> Image.Image:
     image, _ = decode_reference_image(data, max_pixels)
     source = BytesIO()
     image.save(source, format="PNG")
     try:
-        from rembg import new_session, remove
+        from rembg import remove
 
-        session = new_session("u2net")
-        result = remove(source.getvalue(), session=session, alpha_matting=False)
+        result = remove(source.getvalue(), session=_segmentation_session(), alpha_matting=False)
         cutout = Image.open(BytesIO(result)).convert("RGBA")
         cutout.load()
         return cutout
