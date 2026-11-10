@@ -1,9 +1,12 @@
+import asyncio
+
 import pytest
 
 from app.modules.transformation.worker import (
     WorkerServiceError,
     _safe_job_path,
     _validate_worker_lease,
+    TransformationWorker,
 )
 
 
@@ -57,3 +60,37 @@ def test_worker_lease_rejects_provider_timeout_that_can_outlive_lease(
 ) -> None:
     with pytest.raises(ValueError):
         _validate_worker_lease(lease_seconds, provider_timeout)
+
+def test_worker_progress_updates_are_lease_scoped() -> None:
+    worker = object.__new__(TransformationWorker)
+    worker.worker_id = "worker-1"
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    async def rpc(name: str, payload: dict[str, object]):
+        calls.append((name, payload))
+        return True
+
+    worker._rpc = rpc
+    asyncio.run(worker._set_progress("job-1", "segmenting", 45))
+    assert calls == [(
+        "update_transformation_job_progress",
+        {
+            "p_job_id": "job-1",
+            "p_worker_id": "worker-1",
+            "p_stage": "segmenting",
+            "p_progress": 45,
+        },
+    )]
+
+
+def test_worker_progress_stops_when_lease_is_lost() -> None:
+    worker = object.__new__(TransformationWorker)
+    worker.worker_id = "worker-1"
+
+    async def rpc(_name: str, _payload: dict[str, object]):
+        return False
+
+    worker._rpc = rpc
+    with pytest.raises(WorkerServiceError) as error:
+        asyncio.run(worker._set_progress("job-1", "uploading", 92))
+    assert error.value.code == "job_lease_lost"
