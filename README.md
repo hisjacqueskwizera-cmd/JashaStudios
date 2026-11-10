@@ -6,7 +6,7 @@ Jasha Studios helps customers recreate the photographic treatment of a reference
 
 ## Current implementation
 
-The repository includes the application foundation, Supabase Auth integration, and the desktop dashboard/project-management workflow. The repository includes the desktop-to-phone capture workflow, reference analysis, pose coaching, private image gallery and a local computer-vision transformation pipeline. The local transformation path uses rembg/U2Net segmentation and OpenCV compositing; it is not a diffusion-based generative image model. Live use still requires the owner’s Supabase project, migrations, server secrets and worker deployment.
+The repository includes the application foundation, Supabase Auth integration, and the desktop dashboard/project-management workflow. The repository includes the desktop-to-phone capture workflow, reference analysis, pose coaching, Supabase Realtime synchronization for captures/pairing/jobs, private image gallery and a local computer-vision transformation pipeline. The local transformation path uses rembg/U2Net segmentation and OpenCV compositing; it is not a diffusion-based generative image model. Live use still requires the owner’s Supabase project, migrations, server secrets and worker deployment.
 
 ## Technology
 
