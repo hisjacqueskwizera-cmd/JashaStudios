@@ -14,11 +14,7 @@ import httpx
 from PIL import Image
 
 from app.modules.transformation.pipeline import prepare_generated_image, prepare_transformation
-from app.modules.transformation.providers import (
-    OpenAIImageGenerationProvider,
-    ProviderError,
-    ProviderUnavailable,
-)
+from app.modules.transformation.local_engine import LocalModelUnavailable, transform_photograph
 from app.settings import get_settings
 
 logger = logging.getLogger("jasha.transformation.worker")
@@ -53,15 +49,8 @@ class TransformationWorker:
         if not settings.supabase_url or not settings.supabase_secret_key or not settings.openai_api_key:
             raise RuntimeError("Worker requires SUPABASE_URL, SUPABASE_SECRET_KEY and OPENAI_API_KEY.")
         self.settings = settings
-        try:
-            _validate_worker_lease(
-                settings.transformation_job_lease_seconds,
-                settings.openai_image_timeout_seconds,
-            )
-        except ValueError as exc:
-            raise RuntimeError(
-                "TRANSFORMATION_JOB_LEASE_SECONDS must exceed OPENAI_IMAGE_TIMEOUT_SECONDS by at least 30 seconds."
-            ) from exc
+        if settings.transformation_job_lease_seconds <= 90:
+            raise RuntimeError("TRANSFORMATION_JOB_LEASE_SECONDS must exceed 90 seconds for local image processing.")
         self.worker_id = settings.transformation_worker_id or f"{socket.gethostname()}-{uuid4().hex[:12]}"
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(60, connect=15),
@@ -69,11 +58,6 @@ class TransformationWorker:
                 # Supabase sb_secret keys are opaque API keys, not JWT bearer tokens.
                 "apikey": settings.supabase_secret_key,
             },
-        )
-        self.provider = OpenAIImageGenerationProvider(
-            api_key=settings.openai_api_key,
-            model=settings.openai_image_model,
-            timeout_seconds=settings.openai_image_timeout_seconds,
         )
 
     async def close(self) -> None:
@@ -155,9 +139,10 @@ class TransformationWorker:
             captured_bytes, reference_bytes = await asyncio.gather(
                 self._download(capture_path), self._download(reference_path)
             )
-            captured, style_reference, readiness = prepare_transformation(
+            _, _, readiness = prepare_transformation(
                 captured_bytes, reference_bytes, self.settings.max_reference_pixels,
-                generation_provider="openai", generation_available=True,
+                generation_provider="local_opencv_rembg",
+                generation_available=self.settings.local_transform_enabled,
             )
             if readiness.status == "retake_recommended":
                 raise WorkerServiceError(
@@ -165,25 +150,11 @@ class TransformationWorker:
                     retryable=False, code="capture_quality_retake_recommended",
                 )
 
-            style_notes = (job.get("transformation_settings") or {}).get("style_notes", "")
-            prompt = (
-                "Match the reference photograph's photographic style, scene, lighting, shadows, "
-                "framing, composition, palette and mood. Maintain a realistic professional-photo finish."
+            # Local U2Net segmentation + OpenCV compositing; no paid AI API is called.
+            output_bytes, local_model = transform_photograph(
+                captured_bytes, reference_bytes, self.settings.max_reference_pixels
             )
-            if isinstance(style_notes, str) and style_notes.strip():
-                prompt += f" Additional direction: {style_notes.strip()[:1000]}"
-
-            generated = await self.provider.generate(
-                captured_image=captured.data,
-                reference_image=style_reference.data,
-                prompt=prompt,
-                identity_preservation=(
-                    "The customer's face and identity are the highest priority. Never replace "
-                    "or blend the customer's face with the reference subject."
-                ),
-                safety_identifier=hashlib.sha256(user_id.encode("utf-8")).hexdigest(),
-            )
-            output_bytes, _ = prepare_generated_image(generated.data, self.settings.max_reference_pixels)
+            output_bytes, _ = prepare_generated_image(output_bytes, self.settings.max_reference_pixels)
             if len(output_bytes) > self.settings.max_reference_upload_bytes:
                 raise WorkerServiceError(
                     "Generated output exceeds the configured storage limit.",
@@ -200,20 +171,18 @@ class TransformationWorker:
                 "p_job_id": job_id, "p_worker_id": self.worker_id,
                 "p_storage_path": output_path, "p_byte_size": len(output_bytes),
                 "p_width": width, "p_height": height,
-                "p_provider": "openai", "p_model": generated.model,
+                "p_provider": "local", "p_model": local_model,
             })
             if completed is not True:
                 await self._delete(output_path)
                 logger.info("Job %s was cancelled or its lease was lost before publishing.", job_id)
             else:
                 logger.info("Transformation job %s completed (%sx%s).", job_id, width, height)
-        except ProviderError as exc:
+        except LocalModelUnavailable as exc:
             if output_path:
                 await self._delete(output_path)
-            await self._record_failure(
-                job_id, "provider_unavailable" if isinstance(exc, ProviderUnavailable) else "provider_rejected",
-                isinstance(exc, ProviderUnavailable), attempt_count,
-            )
+            logger.warning("Local segmentation model unavailable for job %s: %s", job_id, exc)
+            await self._record_failure(job_id, "local_model_unavailable", True, attempt_count)
         except WorkerServiceError as exc:
             if output_path:
                 await self._delete(output_path)
