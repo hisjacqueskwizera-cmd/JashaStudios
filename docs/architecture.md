@@ -11,10 +11,10 @@ The desktop is the studio control room. The smartphone is the capture device and
 | UI system | Accessible reusable interface | Tailwind CSS v4, shadcn/ui-compatible setup, Lucide |
 | PWA | Installable app shell | Web manifest and service worker |
 | Supabase | Authentication, PostgreSQL, storage and owner-scoped workflow records | Migrations and RLS; live setup must be verified |
-| FastAPI | Computer vision and image processing | Reference image analysis endpoint |
-| Python CV | Image analysis, pose, segmentation and quality | OpenCV, NumPy, Pillow; MediaPipe model setup pending |
+| FastAPI | Computer vision and image processing | Reference analysis and local transformation endpoints |
+| Python CV | Image analysis, pose, segmentation, scene compositing and quality | OpenCV, NumPy, Pillow, rembg/U2Net; MediaPipe runtime setup still needs verification |
 | Pairing and capture | Temporary phone-to-session link and camera upload authorization | SHA-256 hashed QR challenge plus a separate random per-device bearer credential; narrow Postgres RPCs |
-| Worker / queue | Long-running AI jobs | Planned; Redis/Celery not activated |
+| Worker / queue | Long-running local image-processing jobs | Supabase RPC-backed worker; Redis/Celery not required for the current single-worker MVP |
 | C++ extensions | Profile-proven performance-critical operations | Deferred until profiling demonstrates need |
 | Hosting | Web app, API and GPU worker deployment | Planned |
 
@@ -29,7 +29,7 @@ The desktop is the studio control room. The smartphone is the capture device and
 - After explicit phone confirmation, a separate random device credential is stored only as a SHA-256 hash in Postgres; the raw value stays in the phone tab sessionStorage and is never placed in the QR URL.\n- Capture uploads are authorized against the active paired device and session. The server uses a server-only Supabase secret key for private Storage writes; the phone never receives that key.\n- Camera capture is implemented; pose coaching remains a separate phase.
 
 ## Database foundation
-Migrations create profiles, projects, references and analyses, studio backgrounds and sessions, pairing challenges and paired devices, session events, captures, processing jobs, generated images, subscriptions, credit ledger, payments, notifications and audit logs. RLS is enabled on private records.
+Migrations create profiles, projects, references and analyses, studio backgrounds and sessions, pairing challenges and paired devices, session events, captures, processing jobs, generated images, subscriptions, credit ledger, payments, notifications and audit logs. RLS is enabled on private records. Billing tables remain in the schema for future use but payment collection is out of scope for this MVP.
 
 ## Security baseline
 - Secrets are kept server-side and excluded from Git.
@@ -41,6 +41,7 @@ Migrations create profiles, projects, references and analyses, studio background
 - Health endpoints report liveness only, not model/database readiness.
 
 ## Deferred decisions
-- Redis/Celery and GPU deployment will be selected when model workloads are defined.
+- GPU deployment is deferred; the current MVP uses CPU-based rembg/U2Net and OpenCV. Benchmark before choosing GPU hosting.
+- Payments and monetization are deferred; no checkout or payment provider is active.
 - Model choice must be benchmarked on consented evaluation images.
 - C++/pybind11 will be introduced only after profiling proves a performance bottleneck.
