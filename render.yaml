@@ -37,7 +37,6 @@ services:
     branch: main
     dockerfilePath: ./python-service/Dockerfile
     dockerContext: ./python-service
-    startCommand: python -m app.modules.transformation.worker
     envVars:
       - key: APP_ENV
         value: production
