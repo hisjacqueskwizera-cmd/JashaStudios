@@ -1,4 +1,5 @@
 "use server";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
@@ -28,7 +29,7 @@ export async function signup(formData: FormData) {
   if (!supabase) redirect("/signup?error=configuration");
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email, password: parsed.data.password,
-    options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
+    options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${getPublicAppUrl()}/auth/callback` },
   });
   if (error) redirect("/signup?error=signup");
   if (!data.session) redirect("/login?notice=confirm-email");

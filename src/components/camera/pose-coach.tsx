@@ -70,7 +70,7 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
   // cannot preserve ref-derived narrowing inside the nested animation loop.
   const videoElement:HTMLVideoElement=videoCandidate;
   const canvasElement:HTMLCanvasElement=canvasCandidate;
-  let cancelled=false,frameId=0,lastInference=0;
+  let cancelled=false,frameId=0,lastInference=0,lastPythonCoach=0,pythonCoachPending=false,pythonCoachSequence=0;
   let landmarker:Landmarker|null=null,target:Landmark[]|null=null,referenceUrl:string|null=null;
   async function initialize(){
    try{
@@ -96,7 +96,15 @@ export function PoseCoach({videoRef,token,active}:{videoRef:RefObject<HTMLVideoE
      if(videoElement.readyState>=HTMLMediaElement.HAVE_CURRENT_DATA&&timestamp-lastInference>=120){
       lastInference=timestamp;
       const current=landmarker.detectForVideo(videoElement,timestamp).landmarks?.[0];
-      if(current){draw(canvasElement,videoElement,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));}
+      if(current){draw(canvasElement,videoElement,current);const next=target?getSimilarity(current,target):null;setScore(next);setInstruction(getGuidance(current,target,next));
+      if(target&&timestamp-lastPythonCoach>=900&&!pythonCoachPending){lastPythonCoach=timestamp;pythonCoachPending=true;const sequence=++pythonCoachSequence;
+       void fetch("/api/vision/coach",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({reference_landmarks:target,captured_landmarks:current})})
+        .then(async response=>response.ok?response.json():null)
+        .then(result=>{if(!cancelled&&sequence===pythonCoachSequence&&result?.status==="coaching"){setStatus("Python virtual photographer · live guidance");setScore(result.similarity_score??next);setInstruction(Array.isArray(result.instructions)&&result.instructions.length?result.instructions.join(" · "):getGuidance(current,target,next));}})
+        .catch(()=>{})
+        .finally(()=>{pythonCoachPending=false;});
+      }
+     }
       else{setScore(null);setInstruction("Step into the camera frame so your pose can be detected.");canvasElement.getContext("2d")?.clearRect(0,0,canvasElement.width,canvasElement.height);}
      }
      frameId=requestAnimationFrame(loop);
