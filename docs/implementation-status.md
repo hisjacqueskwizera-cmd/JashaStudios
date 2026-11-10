@@ -77,17 +77,22 @@ Updated: 2026-11-08
 - [ ] Calibrate similarity scoring and prompts against diverse body types, poses and camera orientations
 - [ ] Add reference pose analysis to the desktop reference workspace and persist reusable pose metadata
 
-## Phase 9 — Hybrid AI photo transformation (placeholder/scaffold)
+## Phase 9 — Local open-source photo transformation
 - [x] Safe capture/reference preprocessing with EXIF normalization and aspect-ratio-preserving resize
 - [x] Deterministic OpenCV quality checks and retake recommendations
-- [x] Provider-independent image generation interface and OpenAI adapter scaffold
+- [x] Local open-source rembg/U2Net segmentation and OpenCV scene-compositing engine
+- [x] Reference background reconstruction using inpainting
+- [x] Reference subject placement and scale matching while retaining customer foreground pixels
+- [x] Restrained LAB colour treatment and WebP output validation
+- [x] Worker and FastAPI transformation routes no longer require paid external AI credentials
 - [x] Mocked tests for provider request, input ordering, error mapping and output validation
 - [x] Durable job schema, queue RPCs, worker runtime and desktop workflow scaffold
 - [x] Owner-scoped generated-image storage policy and attempt-specific output paths
+- [ ] Install rembg CPU dependencies and validate U2Net model download/runtime on the target host
 - [ ] Apply Phase 9 queue migration to staging/live Supabase
-- [ ] Configure provider credentials and deploy the worker when real generation is approved
-- [ ] Run real image-generation smoke tests and evaluate identity/anatomy/style quality
-- [ ] Implement segmentation and identity-preservation evaluation
+- [ ] Run real local transformation smoke tests using consented portraits and reference scenes
+- [ ] Evaluate segmentation edges, subject placement, background inpainting and identity pixel preservation
+- [ ] Benchmark CPU time and memory; use GPU only if target workloads require it
 
 ## Phase 10 — Gallery and desktop synchronization
 - [x] Authenticated account-wide gallery for customer captures and generated-image records
@@ -99,15 +104,10 @@ Updated: 2026-11-08
 - [ ] Verify newly uploaded phone captures appear without a page reload on deployed HTTPS
 - [ ] Verify generated outputs appear after Phase 9 is enabled
 
-## Phase 11 — Payments, credits and subscriptions
-- [x] Seeded RWF catalog for single photo, Standard and Pro pricing
-- [x] Billing page with credit balance, subscription status, activity and payment history
-- [x] Immutable credit ledger and service-role-only verified-payment settlement RPC
-- [x] Provider interface placeholder; checkout remains disabled until a provider is configured
-- [ ] Choose and integrate a Rwanda-compatible payment provider
-- [ ] Verify provider webhooks and real payment settlement in staging
-- [ ] Configure approved monthly credit allowances for Standard and Pro
-- [ ] Implement recurring subscription renewals and failed-payment handling
+## Phase 11 — Payments, credits and subscriptions (deferred / out of scope)
+- [x] Existing billing schema and code retained for future use
+- [x] Customer-facing billing navigation removed from the current MVP
+- [ ] No checkout, payment gateway, payment webhooks, credit purchases or subscription collection will be implemented in this release
 
 ## Phase 12 — Admin dashboard
 - [x] Admin-only route guarded by Supabase app_metadata.role
@@ -148,4 +148,4 @@ Updated: 2026-11-08
 15. Performance, realism and cost optimization
 
 ## Validation discipline
-GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase migrations, auth, storage, payment webhooks, physical QR scanning, MediaPipe model loading and deployed-device behavior are not considered verified until tested against the user's environment. OpenAI provider tests remain mocked until real generation is approved.
+GitHub Actions is authoritative for frontend type-check, lint, build and Python tests. Live Supabase migrations, auth, storage, payment webhooks, physical QR scanning, MediaPipe model loading and deployed-device behavior are not considered verified until tested against the user's environment. Paid image-generation providers are not part of this release; local U2Net/OpenCV transformation must be tested on the target host.
