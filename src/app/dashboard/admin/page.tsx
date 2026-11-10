@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Activity, AlertTriangle, BadgeCheck, Camera, CreditCard, Image, Layers3, ShieldCheck, Users, Wallet } from "lucide-react";
-import { getAdminOverview, setAdminUserStatus, updateAdminBillingProduct, adjustAdminCredits } from "@/app/actions/admin";
+import { ArrowLeft, Activity, AlertTriangle, BadgeCheck, Camera, Image, Layers3, ShieldCheck, Users } from "lucide-react";
+import { getAdminOverview, setAdminUserStatus } from "@/app/actions/admin";
 
 type Props = { searchParams: Promise<{ error?: string }> };
 const number = (value: number | undefined) => new Intl.NumberFormat("en-RW").format(Number(value ?? 0));
-const money = (value: number | undefined) => new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value ?? 0));
 const date = (value: string | null | undefined) => value ? new Date(value).toLocaleString() : "—";
 
 export default async function AdminDashboardPage({ searchParams }: Props) {
@@ -20,52 +19,37 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
     { label: "Active customers", value: s.active_users, icon: BadgeCheck },
     { label: "Projects", value: s.total_projects, icon: Layers3 },
     { label: "Phone captures", value: s.total_captures, icon: Camera },
-    { label: "AI results", value: s.total_generated_images, icon: Image },
-    { label: "Revenue recorded", value: money(s.revenue_rwf), icon: Wallet },
+    { label: "Finished photographs", value: s.total_generated_images, icon: Image },
     { label: "Queued jobs", value: s.jobs_queued, icon: Activity },
     { label: "Failed jobs", value: s.jobs_failed, icon: AlertTriangle },
+    { label: "Suspended accounts", value: s.suspended_users, icon: ShieldCheck },
   ];
   return (
     <main className="min-h-screen bg-[#10100f] px-5 py-8 text-white sm:px-8 lg:px-10">
       <div className="mx-auto max-w-[1500px]">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-[#aaa49b] hover:text-white"><ArrowLeft size={15}/> Workspace</Link>
         <header className="mt-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div><p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d58a48]">Platform administration</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Admin dashboard</h1><p className="mt-2 text-sm text-[#aaa49b]">Customer operations, billing configuration and platform activity.</p></div>
+          <div><p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d58a48]">Platform administration</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Admin dashboard</h1><p className="mt-2 text-sm text-[#aaa49b]">Customer operations, photography workflow and platform activity.</p></div>
           <span className="inline-flex items-center gap-2 self-start rounded-full border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-xs text-emerald-200"><ShieldCheck size={14}/> Admin access verified</span>
         </header>
         {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-200">The requested change could not be completed. Check the values and try again.</p>}
         <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((item) => { const Icon = item.icon; return <article key={item.label} className="rounded-2xl border border-white/10 bg-[#171715] p-5"><div className="flex items-center justify-between text-xs text-[#aaa49b]">{item.label}<Icon size={16} className="text-[#d58a48]"/></div><p className="mt-3 text-2xl font-semibold tabular-nums">{typeof item.value === "string" ? item.value : number(item.value)}</p></article>; })}
+          {stats.map((item) => { const Icon = item.icon; return <article key={item.label} className="rounded-2xl border border-white/10 bg-[#171715] p-5"><div className="flex items-center justify-between text-xs text-[#aaa49b]">{item.label}<Icon size={16} className="text-[#d58a48]"/></div><p className="mt-3 text-2xl font-semibold tabular-nums">{number(item.value)}</p></article>; })}
         </section>
         <section className="mt-9 rounded-2xl border border-white/10 bg-[#171715] p-5 sm:p-6">
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><h2 className="text-lg font-semibold">Customer accounts</h2><p className="mt-1 text-xs text-[#8e8980]">Latest 50 accounts · suspend/reactivate and adjust credits with an audit record.</p></div><span className="text-xs text-[#8e8980]">{number(s.suspended_users)} suspended</span></div>
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><h2 className="text-lg font-semibold">Customer accounts</h2><p className="mt-1 text-xs text-[#8e8980]">Latest 50 accounts · suspend or reactivate with an audit record.</p></div><span className="text-xs text-[#8e8980]">{number(s.suspended_users)} suspended</span></div>
           <div className="mt-5 space-y-3">
-            {result.users.map((user) => <article key={user.user_id} className="grid gap-4 rounded-xl border border-white/10 bg-black/10 p-4 xl:grid-cols-[minmax(180px,1fr)_auto_auto] xl:items-center">
-              <div className="min-w-0"><p className="truncate text-sm font-medium">{user.full_name || user.email || "Unnamed customer"}</p><p className="mt-1 truncate text-xs text-[#8e8980]">{user.email} · Joined {date(user.created_at)}</p><p className="mt-1 text-xs text-[#aaa49b]">{number(user.projects_count)} projects · {number(user.credit_balance)} credits</p></div>
+            {result.users.map((user) => <article key={user.user_id} className="grid gap-4 rounded-xl border border-white/10 bg-black/10 p-4 sm:grid-cols-[minmax(180px,1fr)_auto] sm:items-center">
+              <div className="min-w-0"><p className="truncate text-sm font-medium">{user.full_name || user.email || "Unnamed customer"}</p><p className="mt-1 truncate text-xs text-[#8e8980]">{user.email} · Joined {date(user.created_at)}</p><p className="mt-1 text-xs text-[#aaa49b]">{number(user.projects_count)} projects</p></div>
               <form action={setAdminUserStatus} className="flex items-center gap-2"><input type="hidden" name="user_id" value={user.user_id}/><input type="hidden" name="status" value={user.account_status === "suspended" ? "active" : "suspended"}/><span className={user.account_status === "active" ? "rounded-full border border-emerald-400/20 px-2 py-1 text-[10px] text-emerald-200" : "rounded-full border border-amber-400/20 px-2 py-1 text-[10px] text-amber-200"}>{user.account_status}</span><button className="rounded-lg border border-white/10 px-3 py-2 text-xs hover:bg-white/5">{user.account_status === "suspended" ? "Reactivate" : "Suspend"}</button></form>
-              <form action={adjustAdminCredits} className="grid grid-cols-[70px_minmax(100px,1fr)_auto] gap-2"><input type="hidden" name="user_id" value={user.user_id}/><input name="amount" type="number" step="1" min="-10000" max="10000" required placeholder="+/- credits" className="min-w-0 rounded-lg border border-white/10 bg-[#10100f] px-2 py-2 text-xs outline-none focus:border-[#d58a48]"/><input name="reason" minLength={5} maxLength={300} required placeholder="Reason for adjustment" className="min-w-0 rounded-lg border border-white/10 bg-[#10100f] px-2 py-2 text-xs outline-none focus:border-[#d58a48]"/><button className="rounded-lg bg-[#d58a48] px-3 py-2 text-xs font-semibold text-[#17130f]">Adjust</button></form>
             </article>)}
             {result.users.length === 0 && <p className="py-6 text-center text-sm text-[#8e8980]">No customer accounts found.</p>}
           </div>
         </section>
-        <section className="mt-9 rounded-2xl border border-white/10 bg-[#171715] p-5 sm:p-6">
-          <div><h2 className="text-lg font-semibold">Product and credit configuration</h2><p className="mt-1 text-xs text-[#8e8980]">Edit RWF prices, monthly allowances and product availability. Changes are audited.</p></div>
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            {result.products.map((product) => <form key={product.code} action={updateAdminBillingProduct} className="rounded-xl border border-white/10 bg-black/10 p-4">
-              <input type="hidden" name="code" value={product.code}/>
-              <div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-semibold">{product.name}</h3><p className="mt-1 text-[11px] text-[#8e8980]">{product.code} · {product.billing_interval}</p></div><span className="text-[10px] text-[#aaa49b]">{product.product_type}</span></div>
-              <label className="mt-4 block text-xs text-[#aaa49b]">Price (RWF)<input name="amount_rwf" type="number" min="1" step="1" required defaultValue={Number(product.amount_minor)} className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-[#10100f] px-3 text-sm text-white outline-none focus:border-[#d58a48]"/></label>
-              <label className="mt-3 block text-xs text-[#aaa49b]">{product.billing_interval === "month" ? "Monthly credit allowance" : "Credits per purchase"}<input name="credits" type="number" min="1" step="1" defaultValue={product.credits_per_purchase ?? ""} placeholder="Not configured" className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-[#10100f] px-3 text-sm text-white outline-none focus:border-[#d58a48]"/></label>
-              <label className="mt-3 flex items-center gap-2 text-xs text-[#c8c1b6]"><input type="checkbox" name="is_active" defaultChecked={product.is_active} className="accent-[#d58a48]"/> Available for purchase</label>
-              <button className="mt-4 h-10 w-full rounded-lg bg-[#d58a48] text-xs font-semibold text-[#17130f] hover:bg-[#e29b5a]">Save product settings</button>
-            </form>)}
-          </div>
-        </section>
         <section className="mt-9 grid gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-[#171715] p-5"><div className="flex items-center gap-2"><CreditCard size={16} className="text-[#d58a48]"/><h2 className="font-semibold">Recent payments</h2></div><div className="mt-4 space-y-3">{result.payments.map((payment) => <div key={payment.payment_id} className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 text-xs"><div className="min-w-0"><p className="truncate text-sm">{payment.user_email || "Unknown customer"}</p><p className="mt-1 text-[#8e8980]">{payment.product_code || "Unassigned product"} · {payment.provider} · {date(payment.created_at)}</p></div><div className="shrink-0 text-right"><p className="font-semibold">{money(payment.amount_rwf)}</p><p className="mt-1 capitalize text-[#aaa49b]">{payment.status}</p></div></div>)}{result.payments.length===0 && <p className="py-5 text-sm text-[#8e8980]">No payment records yet.</p>}</div></div>
-          <div className="rounded-2xl border border-white/10 bg-[#171715] p-5"><div className="flex items-center gap-2"><Activity size={16} className="text-[#d58a48]"/><h2 className="font-semibold">Transformation jobs</h2></div><div className="mt-4 space-y-3">{result.jobs.map((job) => <div key={job.job_id} className="border-b border-white/5 pb-3 text-xs"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm">{job.user_email || "Unknown customer"}</p><span className="capitalize text-[#d8b18e]">{job.status}</span></div><p className="mt-1 text-[#8e8980]">{job.stage || "—"} · {job.provider || "Provider unset"} · {date(job.created_at)}</p>{job.error_code && <p className="mt-1 text-amber-200">Error: {job.error_code}</p>}</div>)}{result.jobs.length===0 && <p className="py-5 text-sm text-[#8e8980]">No transformation jobs yet.</p>}</div></div>
+          <div className="rounded-2xl border border-white/10 bg-[#171715] p-5"><div className="flex items-center gap-2"><Activity size={16} className="text-[#d58a48]"/><h2 className="font-semibold">Transformation jobs</h2></div><div className="mt-4 space-y-3">{result.jobs.map((job) => <div key={job.job_id} className="border-b border-white/5 pb-3 text-xs"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm">{job.user_email || "Unknown customer"}</p><span className="capitalize text-[#d8b18e]">{job.status}</span></div><p className="mt-1 text-[#8e8980]">{job.stage || "—"} · {job.provider || "Local processing"} · {date(job.created_at)}</p>{job.error_code && <p className="mt-1 text-amber-200">Error: {job.error_code}</p>}</div>)}{result.jobs.length===0 && <p className="py-5 text-sm text-[#8e8980]">No transformation jobs yet.</p>}</div></div>
+          <div className="rounded-2xl border border-white/10 bg-[#171715] p-5"><h2 className="font-semibold">Administrator audit trail</h2><div className="mt-4 space-y-3">{result.audit.map((entry) => <div key={entry.id} className="flex flex-col justify-between gap-1 border-b border-white/5 pb-3 text-xs sm:flex-row"><span><strong className="font-medium text-white">{entry.action}</strong><span className="ml-2 text-[#8e8980]">{entry.actor_email || "System"} · {entry.target_type || "record"}</span></span><time className="text-[#77736c]">{date(entry.created_at)}</time></div>)}{result.audit.length===0 && <p className="py-4 text-sm text-[#8e8980]">No administrative changes recorded yet.</p>}</div></div>
         </section>
-        <section className="mt-9 rounded-2xl border border-white/10 bg-[#171715] p-5"><h2 className="font-semibold">Administrator audit trail</h2><div className="mt-4 space-y-3">{result.audit.map((entry) => <div key={entry.id} className="flex flex-col justify-between gap-1 border-b border-white/5 pb-3 text-xs sm:flex-row"><span><strong className="font-medium text-white">{entry.action}</strong><span className="ml-2 text-[#8e8980]">{entry.actor_email || "System"} · {entry.target_type || "record"}</span></span><time className="text-[#77736c]">{date(entry.created_at)}</time></div>)}{result.audit.length===0 && <p className="py-4 text-sm text-[#8e8980]">No administrative changes recorded yet.</p>}</div></section>
         <footer className="mt-10 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-5 text-xs text-[#77736c]"><span>Jasha Studios · Administration</span><Link href="/dashboard" className="text-[#e6a66c] hover:text-white">Return to workspace</Link></footer>
       </div>
     </main>
