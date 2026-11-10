@@ -109,7 +109,7 @@ def transform_photograph(
         reference_box = _subject_bounds(reference_cutout)
         background = _reference_background(reference, reference_cutout)
 
-            target_width = max(1, reference_box[2] - reference_box[0])
+        target_width = max(1, reference_box[2] - reference_box[0])
         target_height = max(1, reference_box[3] - reference_box[1])
         source_subject = captured_cutout.crop(capture_box)
 
