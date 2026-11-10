@@ -9,12 +9,7 @@ from app.modules.transformation.pipeline import (
     prepare_generated_image,
     prepare_transformation,
 )
-from app.modules.transformation.providers import (
-    OpenAIImageGenerationProvider,
-    ProviderError,
-    ProviderNotConfigured,
-    ProviderTimeout,
-)
+from app.modules.transformation.local_engine import LocalModelUnavailable, transform_photograph
 from app.modules.transformation.schemas import TransformationPreparationResponse
 from app.settings import get_settings
 
@@ -68,8 +63,8 @@ async def prepare_transformation_request(
             captured_bytes,
             reference_bytes,
             settings.max_reference_pixels,
-            generation_provider="openai" if settings.openai_api_key else "not_configured",
-            generation_available=bool(settings.openai_api_key),
+            generation_provider="local_opencv_rembg",
+            generation_available=settings.local_transform_enabled,
         )
         return response
     except InvalidReferenceImage as exc:
@@ -87,26 +82,24 @@ async def generate_transformation_request(
     safety_identifier: str | None = Form(default=None, max_length=64),
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
 ) -> Response:
-    """Internal synchronous provider adapter; production job workers will call this boundary."""
+    """Run the local open-source segmentation and OpenCV composition pipeline."""
     _authorize(x_api_key)
     settings = get_settings()
-    if not settings.transformation_enabled:
-        raise HTTPException(status_code=503, detail="AI transformation is currently a placeholder and is disabled.")
+    if not settings.transformation_enabled or not settings.local_transform_enabled:
+        raise HTTPException(status_code=503, detail="Local photo transformation is not enabled.")
     if safety_identifier and not SAFETY_IDENTIFIER_PATTERN.fullmatch(safety_identifier):
         raise HTTPException(status_code=422, detail="Safety identifier must be a SHA-256 hex digest.")
 
     try:
         captured_bytes = await _read_limited(captured_image, settings.max_reference_upload_bytes)
         reference_bytes = await _read_limited(reference_image, settings.max_reference_upload_bytes)
-        captured, reference, readiness = prepare_transformation(
+        _, _, readiness = prepare_transformation(
             captured_bytes,
             reference_bytes,
             settings.max_reference_pixels,
-            generation_provider="openai" if settings.openai_api_key else "not_configured",
-            generation_available=bool(settings.openai_api_key),
+            generation_provider="local_opencv_rembg",
+            generation_available=True,
         )
-        if not settings.openai_api_key:
-            raise HTTPException(status_code=503, detail="Image generation provider is not configured.")
         if readiness.status == "retake_recommended":
             raise HTTPException(
                 status_code=422,
@@ -116,45 +109,24 @@ async def generate_transformation_request(
                     "quality_flags": readiness.captured_image.quality_flags,
                 },
             )
-
-        provider = _provider()
-        prompt = (
-            "Match the reference photograph's photographic style, scene, lighting, shadows, "
-            "framing, composition, palette and mood. Maintain a realistic professional-photo finish."
+        output_bytes, model_name = transform_photograph(
+            captured_bytes, reference_bytes, settings.max_reference_pixels
         )
-        if style_notes.strip():
-            prompt += f" Additional direction: {style_notes.strip()}"
-
-        hashed_safety_id = safety_identifier
-        generated = await provider.generate(
-            captured_image=captured.data,
-            reference_image=reference.data,
-            prompt=prompt,
-            identity_preservation=(
-                "Highest priority. The customer's face and identity must remain recognizable. "
-                "Do not replace or blend the customer's face with the reference subject."
-            ),
-            safety_identifier=hashed_safety_id,
-        )
-        output_bytes, _ = prepare_generated_image(generated.data, settings.max_reference_pixels)
+        output_bytes, _ = prepare_generated_image(output_bytes, settings.max_reference_pixels)
         return Response(
             content=output_bytes,
             media_type="image/webp",
             headers={
                 "Cache-Control": "no-store",
-                "X-Image-Provider": "openai",
-                "X-Image-Model": generated.model,
+                "X-Image-Provider": "local",
+                "X-Image-Model": model_name,
                 "X-Image-Review-Required": "true",
             },
         )
     except InvalidReferenceImage as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ProviderNotConfigured as exc:
-        raise HTTPException(status_code=503, detail="Image generation provider is not configured.") from exc
-    except ProviderTimeout as exc:
-        raise HTTPException(status_code=504, detail="Image generation timed out. The job may be retried.") from exc
-    except ProviderError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except LocalModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail="The local open-source segmentation model is unavailable.") from exc
     finally:
         await captured_image.close()
         await reference_image.close()
