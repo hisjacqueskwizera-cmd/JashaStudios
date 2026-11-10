@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import os
 import socket
@@ -45,7 +44,7 @@ class TransformationWorker:
     def __init__(self) -> None:
         settings = get_settings()
         if not settings.transformation_enabled:
-            raise RuntimeError("Transformation worker is disabled; set TRANSFORMATION_ENABLED=true only when Phase 9 is approved.")
+            raise RuntimeError("Transformation worker is disabled; set TRANSFORMATION_ENABLED=true to enable local processing.")
         if not settings.supabase_url or not settings.supabase_secret_key or not settings.openai_api_key:
             raise RuntimeError("Worker requires SUPABASE_URL, SUPABASE_SECRET_KEY and OPENAI_API_KEY.")
         self.settings = settings
