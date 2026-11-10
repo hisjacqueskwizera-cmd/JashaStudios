@@ -70,7 +70,7 @@ export function ProjectAssetsManager({
 
     setBusy(true);
     try {
-      const localAnalysis = uploadType === "reference" ? await analyzeImageInBrowser(file) : null;
+      const localAnalysis = uploadType === "reference" ? await analyzeImageInBrowser(file).catch(() => null) : null;
       const body = new FormData();
       body.set("file", file);
       body.set("assetType", uploadType);
