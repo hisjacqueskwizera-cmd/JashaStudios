@@ -7,6 +7,7 @@ Jasha Studios now has a local, non-generative photo transformation path. It does
 - FastAPI exposes `POST /v1/transform/prepare` for safe input validation and quality diagnostics.
 - FastAPI exposes `POST /v1/transform/generate` for local transformation when `TRANSFORMATION_ENABLED=true` and `LOCAL_TRANSFORM_ENABLED=true`.
 - The background worker claims queued jobs from Supabase and processes them without an external AI provider.
+- A worker-only, lease-scoped RPC reports real processing milestones (download, analysis, segmentation, validation and upload) to the desktop UI; stale or cancelled workers cannot update progress.
 - The local engine uses the open-source rembg U2Net model to segment the customer and reference subjects.
 - OpenCV inpaints the reference subject region to create a scene plate.
 - The customer's segmented pixels are scaled and positioned into the reference subject bounds while retaining their source identity pixels.
