@@ -25,7 +25,8 @@ begin
     and worker_id = p_worker_id
     and status = 'running'
     and lease_expires_at is not null
-    and lease_expires_at > now();
+    and lease_expires_at > now()
+    and cancel_requested_at is null;
 
   return found;
 end;
