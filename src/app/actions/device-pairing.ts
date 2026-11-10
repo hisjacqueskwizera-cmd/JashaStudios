@@ -21,7 +21,7 @@ export async function createDevicePairing(input:unknown){
  if(projectError||!project)return {error:"Project not found or unavailable."};
  const secret=randomBytes(32).toString("base64url");
  const secretHash=createHash("sha256").update(secret,"utf8").digest("hex");
- let appUrl:string;try{appUrl=getPublicAppUrl();}catch{return {error:"The public app URL is not configured. Set NEXT_PUBLIC_SITE_URL and retry."};}
+ let appUrl:string;try{appUrl=await getPublicAppUrl();}catch{return {error:"The public app URL is not configured. Set NEXT_PUBLIC_SITE_URL and retry."};}
  const expiresAt=new Date(Date.now()+5*60*1000).toISOString();
  const {data,error}=await client.supabase.rpc("create_pairing_challenge",{p_project_id:parsed.data,p_secret_hash:secretHash,p_expires_at:expiresAt}).single();
  const row=data as unknown as {created_challenge_id:string;created_session_id:string;challenge_expires_at:string}|null;
